@@ -1,15 +1,17 @@
 use super::piece::{Color, Piece, PieceType};
 use serde::{Deserialize, Serialize};
 
+const BOARD_SIZE: usize = 8;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Board {
-    squares: [[Option<Piece>; 8]; 8],
+    squares: [[Option<Piece>; BOARD_SIZE]; BOARD_SIZE],
 }
 
 impl Board {
     pub fn new() -> Self {
         let mut board = Self {
-            squares: [[None; 8]; 8],
+            squares: [[None; BOARD_SIZE]; BOARD_SIZE],
         };
         board.setup_initial_position();
         board
@@ -17,13 +19,13 @@ impl Board {
 
     pub fn empty() -> Self {
         Self {
-            squares: [[None; 8]; 8],
+            squares: [[None; BOARD_SIZE]; BOARD_SIZE],
         }
     }
 
     fn setup_initial_position(&mut self) {
         // Setup pawns
-        for col in 0..8 {
+        for col in 0..BOARD_SIZE {
             self.squares[1][col] = Some(Piece::new(PieceType::Pawn, Color::White));
             self.squares[6][col] = Some(Piece::new(PieceType::Pawn, Color::Black));
         }
@@ -50,7 +52,7 @@ impl Board {
     }
 
     pub fn get(&self, row: usize, col: usize) -> Option<Piece> {
-        if row < 8 && col < 8 {
+        if row < BOARD_SIZE && col < BOARD_SIZE {
             self.squares[row][col]
         } else {
             None
@@ -58,13 +60,13 @@ impl Board {
     }
 
     pub fn set(&mut self, row: usize, col: usize, piece: Option<Piece>) {
-        if row < 8 && col < 8 {
+        if row < BOARD_SIZE && col < BOARD_SIZE {
             self.squares[row][col] = piece;
         }
     }
 
     pub fn move_piece(&mut self, from_row: usize, from_col: usize, to_row: usize, to_col: usize) -> bool {
-        if from_row >= 8 || from_col >= 8 || to_row >= 8 || to_col >= 8 {
+        if from_row >= BOARD_SIZE || from_col >= BOARD_SIZE || to_row >= BOARD_SIZE || to_col >= BOARD_SIZE {
             return false;
         }
 
@@ -78,7 +80,7 @@ impl Board {
     }
 
     pub fn is_valid_position(row: i32, col: i32) -> bool {
-        row >= 0 && row < 8 && col >= 0 && col < 8
+        row >= 0 && row < BOARD_SIZE as i32 && col >= 0 && col < BOARD_SIZE as i32
     }
 }
 

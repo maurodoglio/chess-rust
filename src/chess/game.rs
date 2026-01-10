@@ -2,6 +2,8 @@ use super::board::Board;
 use super::piece::{Color, Piece, PieceType};
 use serde::{Deserialize, Serialize};
 
+const BOARD_SIZE: usize = 8;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Move {
     pub from_row: usize,
@@ -39,8 +41,8 @@ impl ChessGame {
 
     pub fn make_move(&mut self, chess_move: Move) -> Result<(), String> {
         // Basic validation
-        if chess_move.from_row >= 8 || chess_move.from_col >= 8 
-            || chess_move.to_row >= 8 || chess_move.to_col >= 8 {
+        if chess_move.from_row >= BOARD_SIZE || chess_move.from_col >= BOARD_SIZE 
+            || chess_move.to_row >= BOARD_SIZE || chess_move.to_col >= BOARD_SIZE {
             return Err("Invalid move: coordinates out of bounds".to_string());
         }
 
@@ -93,8 +95,13 @@ impl ChessGame {
 
         match piece.piece_type {
             PieceType::Pawn => {
-                let direction = if piece.color == Color::White { 1 } else { -1 };
-                let start_row = if piece.color == Color::White { 1 } else { 6 };
+                const WHITE_DIRECTION: i32 = 1;
+                const BLACK_DIRECTION: i32 = -1;
+                const WHITE_START_ROW: i32 = 1;
+                const BLACK_START_ROW: i32 = 6;
+
+                let direction = if piece.color == Color::White { WHITE_DIRECTION } else { BLACK_DIRECTION };
+                let start_row = if piece.color == Color::White { WHITE_START_ROW } else { BLACK_START_ROW };
 
                 // Forward move
                 if from_col == to_col {
@@ -239,4 +246,3 @@ mod tests {
         assert!(game.make_move(chess_move).is_err());
     }
 }
-
