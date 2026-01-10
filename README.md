@@ -110,6 +110,38 @@ cargo test
 
 The server will start on `http://0.0.0.0:3000`
 
+## Web Frontend
+
+A complete web frontend is available in the `frontend/` directory. The frontend provides:
+
+- Modern, responsive UI for playing chess
+- Game creation and joining
+- Real-time game state updates
+- Visual feedback and move validation
+- Easy-to-use interface with Unicode chess pieces
+
+### Running the Frontend
+
+1. Start the backend server:
+   ```bash
+   cargo run
+   ```
+
+2. Serve the frontend (choose one method):
+   ```bash
+   # Using Python
+   cd frontend
+   python3 -m http.server 8000
+   
+   # Using Node.js
+   cd frontend
+   npx http-server -p 8000
+   ```
+
+3. Open `http://localhost:8000` in your browser
+
+For more details, see [frontend/README.md](frontend/README.md)
+
 ## Architecture
 
 The project is organized into several modules:

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Game - Rust Backend</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>♟️ Chess Game</h1>
+            <p class="subtitle">Multiplayer Chess with Rust Backend</p>
+        </header>
+
+        <main>
+            <!-- Game Controls -->
+            <div class="controls" id="gameControls">
+                <div class="control-group">
+                    <button id="newGameBtn" class="btn btn-primary">New Game</button>
+                    <button id="joinGameBtn" class="btn btn-secondary">Join Game</button>
+                    <button id="listGamesBtn" class="btn btn-secondary">List Games</button>
+                </div>
+                
+                <div class="player-info" id="playerInfo" style="display: none;">
+                    <p><strong>Game ID:</strong> <span id="gameId"></span></p>
+                    <p><strong>Your Color:</strong> <span id="playerColor"></span></p>
+                    <p><strong>Current Turn:</strong> <span id="currentTurn"></span></p>
+                    <p><strong>Game Status:</strong> <span id="gameStatus"></span></p>
+                </div>
+            </div>
+
+            <!-- Game List Modal -->
+            <div id="gameListModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>Available Games</h2>
+                    <div id="gamesList"></div>
+                </div>
+            </div>
+
+            <!-- Join Game Modal -->
+            <div id="joinGameModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>Join Game</h2>
+                    <div class="form-group">
+                        <label for="gameIdInput">Game ID:</label>
+                        <input type="text" id="gameIdInput" placeholder="Enter game ID">
+                    </div>
+                    <button id="joinGameSubmit" class="btn btn-primary">Join</button>
+                </div>
+            </div>
+
+            <!-- Chess Board -->
+            <div class="board-container">
+                <div id="chessBoard" class="chess-board"></div>
+            </div>
+
+            <!-- Status Messages -->
+            <div id="statusMessage" class="status-message"></div>
+        </main>
+
+        <footer>
+            <p>Backend API: <span id="apiUrl">http://localhost:3000</span></p>
+            <div class="api-controls">
+                <label for="apiUrlInput">API URL:</label>
+                <input type="text" id="apiUrlInput" value="http://localhost:3000" placeholder="http://localhost:3000">
+                <button id="updateApiBtn" class="btn btn-small">Update</button>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
