@@ -18,7 +18,7 @@ class ChessApp {
         // Generate a unique player ID or retrieve from localStorage
         let playerId = localStorage.getItem('chess_player_id');
         if (!playerId) {
-            playerId = 'player_' + Math.random().toString(36).substr(2, 9);
+            playerId = 'player_' + Math.random().toString(36).substring(2, 11);
             localStorage.setItem('chess_player_id', playerId);
         }
         return playerId;
@@ -174,14 +174,28 @@ class ChessApp {
             gamesListDiv.innerHTML = '<p>No games available. Create a new game!</p>';
         } else {
             gamesListDiv.innerHTML = games.map(game => `
-                <div class="game-item" onclick="chessApp.joinGame('${game.id}')">
-                    <p class="game-id">Game ID: ${game.id}</p>
+                <div class="game-item" data-game-id="${this.escapeHtml(game.id)}">
+                    <p class="game-id">Game ID: ${this.escapeHtml(game.id)}</p>
                     <p class="game-status">${game.is_full ? '🔴 Full' : '🟢 Available'}</p>
                 </div>
             `).join('');
+            
+            // Use event delegation for game item clicks
+            gamesListDiv.querySelectorAll('.game-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const gameId = item.dataset.gameId;
+                    this.joinGame(gameId);
+                });
+            });
         }
         
         modal.style.display = 'flex';
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     startPolling() {
