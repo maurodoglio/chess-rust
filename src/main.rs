@@ -34,9 +34,12 @@ async fn main() {
     // Start the server
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
         .await
-        .unwrap();
+        .expect("Failed to bind to address 0.0.0.0:3000");
     
-    tracing::info!("Chess server listening on {}", listener.local_addr().unwrap());
+    tracing::info!("Chess server listening on {}", 
+        listener.local_addr().expect("Failed to get local address"));
     
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app)
+        .await
+        .expect("Failed to start server");
 }

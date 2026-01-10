@@ -144,7 +144,8 @@ async fn make_move(
     }
 
     // Verify it's the player's turn
-    let player_color = session.get_player_color(&request.player_id).unwrap();
+    let player_color = session.get_player_color(&request.player_id)
+        .expect("Player color should exist after verifying player is in game");
     if player_color != session.game.current_turn {
         return Err((
             StatusCode::BAD_REQUEST,
