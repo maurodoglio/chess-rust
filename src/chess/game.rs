@@ -165,3 +165,78 @@ impl Default for ChessGame {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_game() {
+        let game = ChessGame::new();
+        assert_eq!(game.current_turn, Color::White);
+        assert_eq!(game.status, GameStatus::Active);
+        assert_eq!(game.move_history.len(), 0);
+    }
+
+    #[test]
+    fn test_pawn_forward_move() {
+        let mut game = ChessGame::new();
+        let chess_move = Move {
+            from_row: 1,
+            from_col: 4,
+            to_row: 2,
+            to_col: 4,
+        };
+        assert!(game.make_move(chess_move).is_ok());
+        assert_eq!(game.current_turn, Color::Black);
+    }
+
+    #[test]
+    fn test_pawn_double_move_from_start() {
+        let mut game = ChessGame::new();
+        let chess_move = Move {
+            from_row: 1,
+            from_col: 4,
+            to_row: 3,
+            to_col: 4,
+        };
+        assert!(game.make_move(chess_move).is_ok());
+    }
+
+    #[test]
+    fn test_invalid_move_wrong_turn() {
+        let mut game = ChessGame::new();
+        let chess_move = Move {
+            from_row: 6,
+            from_col: 4,
+            to_row: 5,
+            to_col: 4,
+        };
+        assert!(game.make_move(chess_move).is_err());
+    }
+
+    #[test]
+    fn test_knight_move() {
+        let mut game = ChessGame::new();
+        let chess_move = Move {
+            from_row: 0,
+            from_col: 1,
+            to_row: 2,
+            to_col: 2,
+        };
+        assert!(game.make_move(chess_move).is_ok());
+    }
+
+    #[test]
+    fn test_invalid_move_out_of_bounds() {
+        let mut game = ChessGame::new();
+        let chess_move = Move {
+            from_row: 1,
+            from_col: 4,
+            to_row: 10,
+            to_col: 4,
+        };
+        assert!(game.make_move(chess_move).is_err());
+    }
+}
+

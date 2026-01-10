@@ -1,2 +1,172 @@
 # chess-rust
-This is a simple web chess game implementation built in Rust
+
+A multiplayer web chess game backend implementation built in Rust. This server provides a REST API that enables players to create games, join games, and make moves from different devices.
+
+## Features
+
+- **Complete Chess Game Logic**: Full implementation of chess rules including piece movement validation
+- **Multiplayer Support**: Players can join games from different devices and play in real-time
+- **REST API**: Simple HTTP endpoints for game management
+- **Game State Management**: Maintains multiple simultaneous games with proper state tracking
+- **CORS Enabled**: Ready for web frontend integration
+
+## API Endpoints
+
+### Health Check
+```
+GET /health
+```
+Returns: `OK`
+
+### Create a New Game
+```
+POST /games
+```
+Returns:
+```json
+{
+  "game_id": "uuid-here"
+}
+```
+
+### List All Games
+```
+GET /games/list
+```
+Returns:
+```json
+{
+  "games": [
+    {
+      "id": "game-uuid",
+      "is_full": false
+    }
+  ]
+}
+```
+
+### Get Game State
+```
+GET /games/:game_id
+```
+Returns the complete game state including board, players, and move history.
+
+### Join a Game
+```
+POST /games/:game_id/join
+Content-Type: application/json
+
+{
+  "player_id": "your-player-id"
+}
+```
+Returns:
+```json
+{
+  "color": "white"
+}
+```
+The first player to join gets white, the second gets black.
+
+### Make a Move
+```
+POST /games/:game_id/move
+Content-Type: application/json
+
+{
+  "player_id": "your-player-id",
+  "chess_move": {
+    "from_row": 1,
+    "from_col": 4,
+    "to_row": 3,
+    "to_col": 4
+  }
+}
+```
+Returns the updated game state.
+
+**Coordinate System**: The board uses a 0-7 coordinate system where:
+- Row 0 = White's back rank (a1-h1)
+- Row 7 = Black's back rank (a8-h8)
+- Col 0-7 = Files a-h
+
+## Running the Server
+
+### Prerequisites
+- Rust 1.70 or later
+- Cargo
+
+### Build and Run
+```bash
+# Build the project
+cargo build
+
+# Run the server
+cargo run
+
+# Run tests
+cargo test
+```
+
+The server will start on `http://0.0.0.0:3000`
+
+## Architecture
+
+The project is organized into several modules:
+
+- **chess**: Core chess game logic
+  - `piece.rs`: Piece types and colors
+  - `board.rs`: Board representation and manipulation
+  - `game.rs`: Game rules and move validation
+- **game**: Multiplayer session management
+  - `session.rs`: Game session and player management
+  - `state.rs`: Shared state for multiple games
+- **api**: REST API handlers
+
+## Example Usage
+
+```bash
+# Create a new game
+GAME_ID=$(curl -X POST http://localhost:3000/games | jq -r '.game_id')
+
+# Player 1 joins
+curl -X POST http://localhost:3000/games/$GAME_ID/join \
+  -H "Content-Type: application/json" \
+  -d '{"player_id": "player1"}'
+
+# Player 2 joins
+curl -X POST http://localhost:3000/games/$GAME_ID/join \
+  -H "Content-Type: application/json" \
+  -d '{"player_id": "player2"}'
+
+# Player 1 makes a move (e2 to e4)
+curl -X POST http://localhost:3000/games/$GAME_ID/move \
+  -H "Content-Type: application/json" \
+  -d '{
+    "player_id": "player1",
+    "chess_move": {
+      "from_row": 1,
+      "from_col": 4,
+      "to_row": 3,
+      "to_col": 4
+    }
+  }'
+```
+
+## Future Enhancements
+
+Potential improvements for this backend:
+
+- WebSocket support for real-time move updates
+- Game persistence (database integration)
+- Authentication and user accounts
+- Move history and game replay
+- Check and checkmate detection
+- En passant and castling support
+- Game timers and time controls
+- Spectator mode
+- Game ratings and statistics
+
+## License
+
+See LICENSE file for details.
