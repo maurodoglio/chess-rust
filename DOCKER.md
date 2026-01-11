@@ -351,7 +351,8 @@ jobs:
 
 ## Support
 
-For more information, see:
+This document is the primary guide for Docker usage. For more information, see:
 - [Main README](README.md)
 - [Frontend README](frontend/README.md)
-- [DEPLOYMENT.md](DEPLOYMENT.md)
+- [Docker Deployment Reference](DOCKER-DEPLOYMENT.md) - detailed production deployment scenarios using Docker and Docker Compose
+- [Docker Quick Reference](DOCKER-QUICKREF.md) - concise list of common Docker and Docker Compose commands for this project
