@@ -40,6 +40,11 @@ impl ChessGame {
     }
 
     pub fn make_move(&mut self, chess_move: Move) -> Result<(), String> {
+        // Check if game is already over
+        if self.status == GameStatus::Checkmate || self.status == GameStatus::Stalemate {
+            return Err("Game is already over".to_string());
+        }
+
         // Basic validation
         if chess_move.from_row >= BOARD_SIZE || chess_move.from_col >= BOARD_SIZE 
             || chess_move.to_row >= BOARD_SIZE || chess_move.to_col >= BOARD_SIZE {
@@ -67,6 +72,11 @@ impl ChessGame {
             }
         }
 
+        // Check if the move would leave the king in check
+        if self.would_move_leave_king_in_check(&chess_move, piece.color) {
+            return Err("Move would leave king in check".to_string());
+        }
+
         // Make the move
         self.board.move_piece(
             chess_move.from_row,
@@ -80,6 +90,9 @@ impl ChessGame {
 
         // Switch turns
         self.current_turn = self.current_turn.opposite();
+
+        // Update game status (check for check, checkmate, or stalemate)
+        self.update_game_status();
 
         Ok(())
     }
@@ -165,6 +178,122 @@ impl ChessGame {
 
         true
     }
+
+    /// Find the position of the king for a given color
+    fn find_king(&self, color: Color) -> Option<(usize, usize)> {
+        for row in 0..BOARD_SIZE {
+            for col in 0..BOARD_SIZE {
+                if let Some(piece) = self.board.get(row, col) {
+                    if piece.piece_type == PieceType::King && piece.color == color {
+                        return Some((row, col));
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    /// Check if a square is under attack by the opponent
+    fn is_square_under_attack(&self, row: usize, col: usize, by_color: Color) -> bool {
+        // Check all squares for opponent pieces that can attack this position
+        for from_row in 0..BOARD_SIZE {
+            for from_col in 0..BOARD_SIZE {
+                if let Some(piece) = self.board.get(from_row, from_col) {
+                    if piece.color == by_color {
+                        let test_move = Move {
+                            from_row,
+                            from_col,
+                            to_row: row,
+                            to_col: col,
+                        };
+                        // For attack purposes, we check if the move is valid
+                        // even if there's a piece at the destination
+                        if self.is_valid_move(&test_move, &piece) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// Check if the king of a given color is in check
+    fn is_king_in_check(&self, color: Color) -> bool {
+        if let Some((king_row, king_col)) = self.find_king(color) {
+            self.is_square_under_attack(king_row, king_col, color.opposite())
+        } else {
+            false
+        }
+    }
+
+    /// Check if a move would leave the moving player's king in check
+    fn would_move_leave_king_in_check(&self, chess_move: &Move, piece_color: Color) -> bool {
+        // Make a copy of the board to test the move
+        let mut test_game = self.clone();
+        test_game.board.move_piece(
+            chess_move.from_row,
+            chess_move.from_col,
+            chess_move.to_row,
+            chess_move.to_col,
+        );
+        test_game.is_king_in_check(piece_color)
+    }
+
+    /// Check if a player has any legal moves
+    fn has_any_legal_moves(&self, color: Color) -> bool {
+        for from_row in 0..BOARD_SIZE {
+            for from_col in 0..BOARD_SIZE {
+                if let Some(piece) = self.board.get(from_row, from_col) {
+                    if piece.color == color {
+                        // Try all possible destination squares
+                        for to_row in 0..BOARD_SIZE {
+                            for to_col in 0..BOARD_SIZE {
+                                let test_move = Move {
+                                    from_row,
+                                    from_col,
+                                    to_row,
+                                    to_col,
+                                };
+                                
+                                // Check if this is a valid move
+                                if self.is_valid_move(&test_move, &piece) {
+                                    // Check destination doesn't have friendly piece
+                                    if let Some(dest_piece) = self.board.get(to_row, to_col) {
+                                        if dest_piece.color == piece.color {
+                                            continue;
+                                        }
+                                    }
+                                    
+                                    // Check if move would leave king in check
+                                    if !self.would_move_leave_king_in_check(&test_move, color) {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// Update the game status based on the current board position
+    fn update_game_status(&mut self) {
+        let in_check = self.is_king_in_check(self.current_turn);
+        let has_legal_moves = self.has_any_legal_moves(self.current_turn);
+
+        if in_check && !has_legal_moves {
+            self.status = GameStatus::Checkmate;
+        } else if !in_check && !has_legal_moves {
+            self.status = GameStatus::Stalemate;
+        } else if in_check {
+            self.status = GameStatus::Check;
+        } else {
+            self.status = GameStatus::Active;
+        }
+    }
 }
 
 impl Default for ChessGame {
@@ -244,5 +373,181 @@ mod tests {
             to_col: 4,
         };
         assert!(game.make_move(chess_move).is_err());
+    }
+
+    #[test]
+    fn test_check_detection() {
+        // Set up a position where white king is in check
+        let mut game = ChessGame::new();
+        game.board = Board::empty();
+        
+        // White king at e1 (0, 4)
+        game.board.set(0, 4, Some(Piece::new(PieceType::King, Color::White)));
+        // Black rook at e8 (7, 4) - attacking the white king
+        game.board.set(7, 4, Some(Piece::new(PieceType::Rook, Color::Black)));
+        // Black king at a8 (7, 0)
+        game.board.set(7, 0, Some(Piece::new(PieceType::King, Color::Black)));
+
+        assert!(game.is_king_in_check(Color::White));
+        assert!(!game.is_king_in_check(Color::Black));
+    }
+
+    #[test]
+    fn test_move_into_check_rejected() {
+        // Set up a position where moving would put own king in check
+        let mut game = ChessGame::new();
+        game.board = Board::empty();
+        
+        // White king at e1 (0, 4)
+        game.board.set(0, 4, Some(Piece::new(PieceType::King, Color::White)));
+        // White bishop at d2 (1, 3) blocking a diagonal check
+        game.board.set(1, 3, Some(Piece::new(PieceType::Bishop, Color::White)));
+        // Black bishop at a5 (4, 0) can attack king diagonally through d2
+        game.board.set(4, 0, Some(Piece::new(PieceType::Bishop, Color::Black)));
+        // Black king at a8 (7, 0)
+        game.board.set(7, 0, Some(Piece::new(PieceType::King, Color::Black)));
+
+        game.current_turn = Color::White;
+
+        // Try to move the bishop away, which would expose the king to check
+        let chess_move = Move {
+            from_row: 1,
+            from_col: 3,
+            to_row: 2,
+            to_col: 4,
+        };
+        let result = game.make_move(chess_move);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Move would leave king in check");
+    }
+
+    #[test]
+    fn test_checkmate_detection() {
+        // Set up a back rank checkmate position
+        let mut game = ChessGame::new();
+        game.board = Board::empty();
+        
+        // Simpler checkmate: white king in corner with no escape
+        // White king at a1 (0, 0)
+        game.board.set(0, 0, Some(Piece::new(PieceType::King, Color::White)));
+        // Black queen at b2 (1, 1) will deliver checkmate (protected by king)
+        game.board.set(7, 1, Some(Piece::new(PieceType::Queen, Color::Black)));
+        // Black king at c3 (2, 2) protects the queen
+        game.board.set(2, 2, Some(Piece::new(PieceType::King, Color::Black)));
+
+        game.current_turn = Color::Black;
+        
+        // Move black queen to deliver checkmate at b2
+        let chess_move = Move {
+            from_row: 7,
+            from_col: 1,
+            to_row: 1,
+            to_col: 1,
+        };
+        assert!(game.make_move(chess_move).is_ok());
+        assert_eq!(game.status, GameStatus::Checkmate);
+    }
+
+    #[test]
+    fn test_stalemate_detection() {
+        // Set up a stalemate position
+        let mut game = ChessGame::new();
+        game.board = Board::empty();
+        
+        // White king at a1 (0, 0)
+        game.board.set(0, 0, Some(Piece::new(PieceType::King, Color::White)));
+        // Black king at c2 (1, 2) - controls b1 and b2
+        game.board.set(1, 2, Some(Piece::new(PieceType::King, Color::Black)));
+        // Black rook at b8 (7, 1) will move to deliver stalemate
+        game.board.set(7, 1, Some(Piece::new(PieceType::Rook, Color::Black)));
+
+        game.current_turn = Color::Black;
+        
+        // Move black rook to b2 to create stalemate
+        // After this move, white king at a1 cannot move:
+        // - a2 is controlled by black king at c2
+        // - b1 is controlled by black king at c2
+        // - b2 is occupied by black rook
+        let chess_move = Move {
+            from_row: 7,
+            from_col: 1,
+            to_row: 1,
+            to_col: 1,
+        };
+        let result = game.make_move(chess_move);
+        if let Err(e) = &result {
+            panic!("Move failed with error: {}", e);
+        }
+        assert!(result.is_ok());
+        assert_eq!(game.status, GameStatus::Stalemate);
+    }
+
+    #[test]
+    fn test_check_status_after_checking_move() {
+        // Test that status is updated to Check when a checking move is made
+        let mut game = ChessGame::new();
+        game.board = Board::empty();
+        
+        // White king at e1 (0, 4)
+        game.board.set(0, 4, Some(Piece::new(PieceType::King, Color::White)));
+        // Black rook at a8 (7, 0)
+        game.board.set(7, 0, Some(Piece::new(PieceType::Rook, Color::Black)));
+        // Black king at h8 (7, 7)
+        game.board.set(7, 7, Some(Piece::new(PieceType::King, Color::Black)));
+
+        game.current_turn = Color::Black;
+        
+        // Move black rook to check white king
+        let chess_move = Move {
+            from_row: 7,
+            from_col: 0,
+            to_row: 0,
+            to_col: 0,
+        };
+        assert!(game.make_move(chess_move).is_ok());
+        assert_eq!(game.status, GameStatus::Check);
+    }
+
+    #[test]
+    fn test_cannot_move_when_game_is_over() {
+        let mut game = ChessGame::new();
+        game.status = GameStatus::Checkmate;
+        
+        let chess_move = Move {
+            from_row: 1,
+            from_col: 4,
+            to_row: 2,
+            to_col: 4,
+        };
+        let result = game.make_move(chess_move);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Game is already over");
+    }
+
+    #[test]
+    fn test_king_can_escape_check() {
+        // Test that a king in check can move out of check
+        let mut game = ChessGame::new();
+        game.board = Board::empty();
+        
+        // White king at e1 (0, 4) - in check from rook
+        game.board.set(0, 4, Some(Piece::new(PieceType::King, Color::White)));
+        // Black rook at e8 (7, 4) - giving check
+        game.board.set(7, 4, Some(Piece::new(PieceType::Rook, Color::Black)));
+        // Black king at a8 (7, 0)
+        game.board.set(7, 0, Some(Piece::new(PieceType::King, Color::Black)));
+
+        game.current_turn = Color::White;
+        game.status = GameStatus::Check;
+        
+        // King moves to d1 to escape check
+        let chess_move = Move {
+            from_row: 0,
+            from_col: 4,
+            to_row: 0,
+            to_col: 3,
+        };
+        assert!(game.make_move(chess_move).is_ok());
+        assert_eq!(game.status, GameStatus::Active);
     }
 }
