@@ -1,0 +1,30 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chess-backend
+    ports:
+      - "3000:3000"
+    networks:
+      - chess-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: chess-frontend
+    ports:
+      - "80:80"
+    environment:
+      - API_URL=http://localhost:3000
+    networks:
+      - chess-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  chess-network:
+    driver: bridge

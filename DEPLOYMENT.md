@@ -2,6 +2,44 @@
 
 This guide provides information on how to deploy and use the chess backend.
 
+## Docker Deployment (Recommended)
+
+The easiest way to deploy the application is using Docker and Docker Compose.
+
+### Quick Start
+
+```bash
+# Build and start all services
+docker compose up --build
+
+# Or run in background
+docker compose up -d --build
+```
+
+This will start:
+- Backend API on port 3000
+- Frontend web UI on port 80
+
+Access the game at `http://localhost`
+
+### Docker Commands
+
+```bash
+# View logs
+docker compose logs -f
+
+# Stop services
+docker compose down
+
+# Rebuild after changes
+docker compose up --build
+
+# View running containers
+docker compose ps
+```
+
+For detailed Docker deployment information including production setup, monitoring, and troubleshooting, see [DOCKER.md](DOCKER.md).
+
 ## Local Development
 
 ### Running the Server
@@ -23,7 +61,68 @@ cargo build --release
 
 The optimized binary will be available at `target/release/chess-rust`
 
-## Docker Deployment (Optional)
+## Docker Deployment (Detailed)
+
+### Architecture
+
+The Docker setup uses two containers:
+1. **Backend**: Rust application in a Debian slim container
+2. **Frontend**: Static files served by nginx Alpine
+
+### Building Docker Images
+
+```bash
+# Build backend
+docker build -t chess-backend .
+
+# Build frontend
+docker build -t chess-frontend ./frontend
+```
+
+### Running with Docker Compose
+
+The `docker-compose.yml` file defines the complete stack:
+
+```bash
+# Start all services
+docker compose up
+
+# Start in background
+docker compose up -d
+
+# View logs
+docker compose logs -f backend
+docker compose logs -f frontend
+
+# Stop all services
+docker compose down
+```
+
+### Environment Configuration
+
+The frontend can be configured with the backend API URL:
+
+```yaml
+services:
+  frontend:
+    environment:
+      - API_URL=http://localhost:3000
+```
+
+### Container Management
+
+```bash
+# Restart a service
+docker compose restart backend
+
+# Scale backend (if needed)
+docker compose up --scale backend=2
+
+# Remove all containers and volumes
+docker compose down -v
+```
+
+## Alternative: Manual Docker Build
 
 You can create a simple Dockerfile:
 

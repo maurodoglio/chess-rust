@@ -92,11 +92,31 @@ Returns the updated game state.
 
 ## Running the Server
 
-### Prerequisites
+### Option 1: Using Docker (Recommended for Production)
+
+The easiest way to run both backend and frontend together:
+
+```bash
+# Build and start both services
+docker compose up --build
+
+# Or run in detached mode
+docker compose up -d --build
+```
+
+This will start:
+- Backend API on `http://localhost:3000`
+- Frontend UI on `http://localhost`
+
+For detailed Docker deployment instructions, see [DOCKER.md](DOCKER.md)
+
+### Option 2: Running Locally
+
+#### Prerequisites
 - Rust 1.70 or later
 - Cargo
 
-### Build and Run
+#### Build and Run
 ```bash
 # Build the project
 cargo build
@@ -121,6 +141,15 @@ A complete web frontend is available in the `frontend/` directory. The frontend 
 - Easy-to-use interface with Unicode chess pieces
 
 ### Running the Frontend
+
+#### With Docker (Recommended)
+```bash
+# Run both backend and frontend together
+docker compose up
+```
+Access at `http://localhost`
+
+#### Without Docker
 
 1. Start the backend server:
    ```bash
