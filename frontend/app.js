@@ -2,7 +2,7 @@
 
 class ChessApp {
     constructor() {
-        this.apiUrl = 'http://localhost:3000';
+        this.apiUrl = window.chessConfig?.apiUrl || 'http://localhost:3000';
         this.gameId = null;
         this.playerId = this.generatePlayerId();
         this.playerColor = null;

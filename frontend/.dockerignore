@@ -1,0 +1,13 @@
+# Git
+.git
+.gitignore
+
+# Documentation (except README)
+*.md
+!README.md
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
