@@ -490,6 +490,9 @@ mod tests {
         // Verify accumulated score
         assert_eq!(game.white_score, 2); // 1 (pawn) + 1 (pawn)
         assert_eq!(game.captured_by_white.len(), 2);
+    }
+
+    #[test]
     fn test_check_detection() {
         // Set up a position where white king is in check
         let mut game = ChessGame::new();
