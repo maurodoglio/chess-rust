@@ -86,13 +86,26 @@ echo "Testing frontend container..."
 
 # Test frontend container independently
 docker run -d --name chess-frontend-test -p 8888:80 -e API_URL=http://localhost:3000 chess-rust-frontend
-sleep 2
 
-# Check if container is running
-if docker ps | grep -q chess-frontend-test; then
-    echo -e "${GREEN}✓ Frontend container is running${NC}"
+# Wait for container to be running and HTTP responsive (up to 30 seconds)
+FRONTEND_READY=false
+MAX_RETRIES=30
+for i in $(seq 1 "$MAX_RETRIES"); do
+    if docker ps --filter "name=chess-frontend-test" --filter "status=running" | grep -q chess-frontend-test; then
+        if curl -s http://localhost:8888/ >/dev/null 2>&1; then
+            FRONTEND_READY=true
+            break
+        fi
+    fi
+    echo "Waiting for frontend container to become ready... ($i/$MAX_RETRIES)"
+    sleep 1
+done
+
+# Check if container became ready
+if [ "$FRONTEND_READY" = true ]; then
+    echo -e "${GREEN}✓ Frontend container is running and responding on http://localhost:8888${NC}"
 else
-    echo -e "${RED}✗ Frontend container failed to start${NC}"
+    echo -e "${RED}✗ Frontend container failed to become ready within timeout${NC}"
     docker logs chess-frontend-test
     docker stop chess-frontend-test 2>>/tmp/chess-frontend-test-cleanup.log || true
     docker rm chess-frontend-test 2>>/tmp/chess-frontend-test-cleanup.log || true
