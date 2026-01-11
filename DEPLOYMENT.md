@@ -122,7 +122,7 @@ docker compose up --scale backend=2
 docker compose down -v
 ```
 
-## Docker Deployment (Optional - Legacy Documentation)
+## Alternative: Manual Docker Build
 
 You can create a simple Dockerfile:
 
