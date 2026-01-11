@@ -113,7 +113,7 @@ For detailed Docker deployment instructions, see [DOCKER.md](DOCKER.md)
 ### Option 2: Running Locally
 
 #### Prerequisites
-- Rust 1.70 or later
+- Rust 1.82 or later
 - Cargo
 
 #### Build and Run
