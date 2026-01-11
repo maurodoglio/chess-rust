@@ -68,15 +68,13 @@ impl ChessGame {
             return Err("Invalid move for this piece".to_string());
         }
 
-        // Check if destination has a friendly piece
-        if let Some(dest_piece) = self.board.get(chess_move.to_row, chess_move.to_col) {
+        // Check if destination has a piece and whether it can be captured
+        let captured_piece = self.board.get(chess_move.to_row, chess_move.to_col);
+        if let Some(dest_piece) = captured_piece {
             if dest_piece.color == piece.color {
                 return Err("Cannot capture your own piece".to_string());
             }
         }
-
-        // Check if a piece is being captured
-        let captured_piece = self.board.get(chess_move.to_row, chess_move.to_col);
 
         // Make the move
         self.board.move_piece(
