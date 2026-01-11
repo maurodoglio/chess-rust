@@ -5,6 +5,8 @@ A multiplayer web chess game backend implementation built in Rust. This server p
 ## Features
 
 - **Complete Chess Game Logic**: Full implementation of chess rules including piece movement validation
+- **Check, Checkmate, and Stalemate Detection**: Automatically detects check, checkmate, and stalemate conditions
+- **Move Validation**: Prevents illegal moves that would leave the king in check
 - **Multiplayer Support**: Players can join games from different devices and play in real-time
 - **REST API**: Simple HTTP endpoints for game management
 - **Game State Management**: Maintains multiple simultaneous games with proper state tracking
@@ -89,6 +91,15 @@ Returns the updated game state.
 - Row 0 = White's back rank (a1-h1)
 - Row 7 = Black's back rank (a8-h8)
 - Col 0-7 = Files a-h
+
+**Game Status**: The game automatically tracks and updates the status:
+- `Active`: Normal play continues
+- `Check`: Current player's king is in check
+- `Checkmate`: Current player is checkmated (game over)
+- `Stalemate`: Current player has no legal moves but is not in check (game over)
+- `Draw`: Game has been declared a draw
+
+The game prevents illegal moves that would leave the player's own king in check.
 
 ## Running the Server
 
@@ -222,7 +233,6 @@ Potential improvements for this backend:
 - Game persistence (database integration)
 - Authentication and user accounts
 - Move history and game replay
-- Check and checkmate detection
 - En passant and castling support
 - Game timers and time controls
 - Spectator mode
