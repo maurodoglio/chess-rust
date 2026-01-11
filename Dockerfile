@@ -1,13 +1,10 @@
 # Build stage
-FROM rust:1.70 as builder
+FROM rust:1.82-bookworm as builder
 
 WORKDIR /app
 
-# Copy manifest files
-COPY Cargo.toml Cargo.lock ./
-
-# Copy source code
-COPY src ./src
+# Copy all source files
+COPY . .
 
 # Build the application in release mode
 RUN cargo build --release
