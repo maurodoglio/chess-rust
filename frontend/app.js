@@ -9,6 +9,9 @@ class ChessApp {
         this.selectedSquare = null;
         this.gameState = null;
         this.pollInterval = null;
+        this.lastTurnColor = null;
+        this.turnBannerShown = false;
+        this.statusTimeout = null;
         
         this.initializeUI();
         this.attachEventListeners();
@@ -246,9 +249,22 @@ class ChessApp {
         // Update status message based on turn
         if (this.playerColor) {
             const isMyTurn = currentTurnColor.toLowerCase() === this.playerColor.toLowerCase();
+            
+            // Show the turn banner when turn changes to the player's turn
             if (isMyTurn && status === 'Active') {
-                this.showStatus("It's your turn!", 'success');
+                if (this.lastTurnColor !== currentTurnColor || !this.turnBannerShown) {
+                    this.showStatus("It's your turn!", 'success', true); // persistent banner
+                    this.turnBannerShown = true;
+                }
+            } else {
+                // Clear the turn banner when it's not the player's turn
+                if (this.turnBannerShown) {
+                    this.clearStatus();
+                    this.turnBannerShown = false;
+                }
             }
+            
+            this.lastTurnColor = currentTurnColor;
         }
     }
 
@@ -371,6 +387,7 @@ class ChessApp {
             this.selectedSquare = null;
             this.highlightSquare(null, null, false);
             
+            this.turnBannerShown = false; // Reset turn banner flag after move
             this.showStatus('Move made successfully!', 'success');
         } catch (error) {
             this.showStatus('Error: ' + error.message, 'error');
@@ -379,17 +396,36 @@ class ChessApp {
         }
     }
 
-    showStatus(message, type = 'info') {
+    showStatus(message, type = 'info', persistent = false) {
         const statusDiv = document.getElementById('statusMessage');
         statusDiv.textContent = message;
         statusDiv.className = 'status-message ' + type;
         
-        // Auto-hide success and info messages after 3 seconds
-        if (type !== 'error') {
-            setTimeout(() => {
+        // Clear any existing timeout
+        if (this.statusTimeout) {
+            clearTimeout(this.statusTimeout);
+            this.statusTimeout = null;
+        }
+        
+        // Auto-hide success and info messages after 3 seconds, unless persistent
+        if (type !== 'error' && !persistent) {
+            this.statusTimeout = setTimeout(() => {
                 statusDiv.textContent = '';
                 statusDiv.className = 'status-message';
+                this.statusTimeout = null;
             }, 3000);
+        }
+    }
+
+    clearStatus() {
+        const statusDiv = document.getElementById('statusMessage');
+        statusDiv.textContent = '';
+        statusDiv.className = 'status-message';
+        
+        // Clear any existing timeout
+        if (this.statusTimeout) {
+            clearTimeout(this.statusTimeout);
+            this.statusTimeout = null;
         }
     }
 }
