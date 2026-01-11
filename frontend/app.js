@@ -33,8 +33,15 @@ class ChessApp {
         const board = document.getElementById('chessBoard');
         board.innerHTML = '';
         
-        // Create 8x8 grid (row 7 at top, row 0 at bottom for white's perspective)
-        for (let row = 7; row >= 0; row--) {
+        // Determine board orientation based on player color
+        // White sees row 7 at top, Black sees row 0 at top
+        const isBlack = this.playerColor && this.playerColor.toLowerCase() === 'black';
+        const startRow = isBlack ? 0 : 7;
+        const endRow = isBlack ? 7 : 0;
+        const rowStep = isBlack ? 1 : -1;
+        
+        // Create 8x8 grid with appropriate orientation
+        for (let row = startRow; isBlack ? row <= endRow : row >= endRow; row += rowStep) {
             for (let col = 0; col < 8; col++) {
                 const square = document.createElement('div');
                 square.classList.add('square');
@@ -141,6 +148,9 @@ class ChessApp {
             document.getElementById('playerColor').textContent = this.playerColor;
             
             this.showStatus(`Joined as ${this.playerColor}!`, 'success');
+            
+            // Recreate the board with correct orientation for this player
+            this.createBoard();
             
             // Start polling for game updates
             this.startPolling();
