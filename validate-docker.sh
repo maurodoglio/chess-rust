@@ -94,8 +94,8 @@ if docker ps | grep -q chess-frontend-test; then
 else
     echo -e "${RED}✗ Frontend container failed to start${NC}"
     docker logs chess-frontend-test
-    docker stop chess-frontend-test 2>/dev/null || true
-    docker rm chess-frontend-test 2>/dev/null || true
+    docker stop chess-frontend-test 2>>/tmp/chess-frontend-test-cleanup.log || true
+    docker rm chess-frontend-test 2>>/tmp/chess-frontend-test-cleanup.log || true
     exit 1
 fi
 
