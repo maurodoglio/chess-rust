@@ -5,6 +5,9 @@ FROM nginx:alpine
 COPY index.html /usr/share/nginx/html/
 COPY styles.css /usr/share/nginx/html/
 COPY app.js /usr/share/nginx/html/
+# Note: config.js is copied as a fallback and is normally overwritten
+# at container startup by docker-entrypoint.sh, which generates the
+# runtime configuration used by the frontend.
 COPY config.js /usr/share/nginx/html/
 COPY README.md /usr/share/nginx/html/
 
