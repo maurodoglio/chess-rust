@@ -3,10 +3,21 @@ FROM rust:1.82-bookworm as builder
 
 WORKDIR /app
 
-# Copy all source files
+# First, copy only Cargo manifests to leverage Docker layer caching for dependencies
+COPY Cargo.toml Cargo.lock ./
+
+# Create a dummy main.rs so that we can build and cache dependencies
+RUN mkdir -p src && \
+    echo 'fn main() { println!("dummy build"); }' > src/main.rs
+
+# Build once to compile and cache dependencies
+RUN cargo build --release
+
+# Now remove the dummy source and copy the actual project files
+RUN rm -rf src
 COPY . .
 
-# Build the application in release mode
+# Build the real application in release mode
 RUN cargo build --release
 
 # Runtime stage
