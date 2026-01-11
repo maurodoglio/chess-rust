@@ -27,6 +27,10 @@ pub struct ChessGame {
     pub current_turn: Color,
     pub status: GameStatus,
     pub move_history: Vec<Move>,
+    pub captured_by_white: Vec<Piece>,
+    pub captured_by_black: Vec<Piece>,
+    pub white_score: u32,
+    pub black_score: u32,
 }
 
 impl ChessGame {
@@ -36,6 +40,10 @@ impl ChessGame {
             current_turn: Color::White,
             status: GameStatus::Active,
             move_history: Vec::new(),
+            captured_by_white: Vec::new(),
+            captured_by_black: Vec::new(),
+            white_score: 0,
+            black_score: 0,
         }
     }
 
@@ -67,6 +75,9 @@ impl ChessGame {
             }
         }
 
+        // Check if a piece is being captured
+        let captured_piece = self.board.get(chess_move.to_row, chess_move.to_col);
+
         // Make the move
         self.board.move_piece(
             chess_move.from_row,
@@ -74,6 +85,21 @@ impl ChessGame {
             chess_move.to_row,
             chess_move.to_col,
         );
+
+        // Update captured pieces and scores
+        if let Some(captured) = captured_piece {
+            let value = captured.piece_type.value();
+            match piece.color {
+                Color::White => {
+                    self.captured_by_white.push(captured);
+                    self.white_score += value;
+                }
+                Color::Black => {
+                    self.captured_by_black.push(captured);
+                    self.black_score += value;
+                }
+            }
+        }
 
         // Record the move
         self.move_history.push(chess_move);
@@ -244,5 +270,98 @@ mod tests {
             to_col: 4,
         };
         assert!(game.make_move(chess_move).is_err());
+    }
+
+    #[test]
+    fn test_initial_scores_are_zero() {
+        let game = ChessGame::new();
+        assert_eq!(game.white_score, 0);
+        assert_eq!(game.black_score, 0);
+        assert_eq!(game.captured_by_white.len(), 0);
+        assert_eq!(game.captured_by_black.len(), 0);
+    }
+
+    #[test]
+    fn test_capture_updates_score() {
+        let mut game = ChessGame::new();
+        
+        // Move white pawn forward (e2 to e4)
+        game.make_move(Move {
+            from_row: 1,
+            from_col: 4,
+            to_row: 3,
+            to_col: 4,
+        }).unwrap();
+        
+        // Move black pawn forward (d7 to d5)
+        game.make_move(Move {
+            from_row: 6,
+            from_col: 3,
+            to_row: 4,
+            to_col: 3,
+        }).unwrap();
+        
+        // White captures black pawn (e4 to d5)
+        game.make_move(Move {
+            from_row: 3,
+            from_col: 4,
+            to_row: 4,
+            to_col: 3,
+        }).unwrap();
+        
+        // Verify white captured a pawn
+        assert_eq!(game.white_score, 1);
+        assert_eq!(game.black_score, 0);
+        assert_eq!(game.captured_by_white.len(), 1);
+        assert_eq!(game.captured_by_white[0].piece_type, PieceType::Pawn);
+    }
+
+    #[test]
+    fn test_multiple_captures_accumulate_score() {
+        let mut game = ChessGame::new();
+        
+        // White pawn e2 to e4
+        game.make_move(Move {
+            from_row: 1,
+            from_col: 4,
+            to_row: 3,
+            to_col: 4,
+        }).unwrap();
+        
+        // Black pawn d7 to d5
+        game.make_move(Move {
+            from_row: 6,
+            from_col: 3,
+            to_row: 4,
+            to_col: 3,
+        }).unwrap();
+        
+        // White captures black pawn (e4 to d5) - score +1
+        game.make_move(Move {
+            from_row: 3,
+            from_col: 4,
+            to_row: 4,
+            to_col: 3,
+        }).unwrap();
+        
+        // Black pawn e7 to e6
+        game.make_move(Move {
+            from_row: 6,
+            from_col: 4,
+            to_row: 5,
+            to_col: 4,
+        }).unwrap();
+        
+        // White pawn d5 to e6 - captures black pawn, score +1 more
+        game.make_move(Move {
+            from_row: 4,
+            from_col: 3,
+            to_row: 5,
+            to_col: 4,
+        }).unwrap();
+        
+        // Verify accumulated score
+        assert_eq!(game.white_score, 2); // 1 (pawn) + 1 (pawn)
+        assert_eq!(game.captured_by_white.len(), 2);
     }
 }
