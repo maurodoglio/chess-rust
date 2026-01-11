@@ -1,4 +1,4 @@
-// Configuration loaded from environment
-window.chessConfig = {
-    apiUrl: window.ENV_API_URL || 'http://localhost:3000'
+// Configuration - can be overwritten by docker-entrypoint.sh at runtime
+window.chessConfig = window.chessConfig || {
+    apiUrl: 'http://localhost:3000'
 };

@@ -2,11 +2,11 @@
 set -e
 
 # Generate config.js with environment variables
+# The API_URL environment variable can be set when starting the container
 cat > /usr/share/nginx/html/config.js << EOF
-// Configuration loaded from environment
-window.ENV_API_URL = '${API_URL:-http://localhost:3000}';
+// Configuration loaded from environment at container startup
 window.chessConfig = {
-    apiUrl: window.ENV_API_URL
+    apiUrl: '${API_URL:-http://localhost:3000}'
 };
 EOF
 
