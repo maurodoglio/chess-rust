@@ -48,7 +48,7 @@ else
 fi
 
 # Check if health endpoint exists in API
-if grep -q "/health" src/api.rs; then
+if grep -E '(route|get|Router).*"/health"' src/api.rs >/dev/null 2>&1; then
     echo "✅ Health check endpoint exists"
 else
     echo "⚠️  Health check endpoint not found in api.rs"

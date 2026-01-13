@@ -10,6 +10,8 @@ API_URL="${API_URL:-http://localhost:3000}"
 echo "Using API_URL: $API_URL"
 
 # Generate config.js with the API_URL from environment
+# Note: This overwrites the entire file to ensure clean configuration.
+# The original config.js has the same structure and only contains the apiUrl.
 cat > config.js << EOF
 // Configuration loaded from environment at build time
 window.chessConfig = {
