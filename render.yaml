@@ -10,8 +10,6 @@ services:
     dockerContext: .
     healthCheckPath: /health
     envVars:
-      - key: PORT
-        value: 10000
       - key: RUST_LOG
         value: info
 
