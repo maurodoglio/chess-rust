@@ -1,3 +1,7 @@
+# Render Blueprint Configuration for Chess-Rust
+# This file enables one-click deployment of both backend and frontend to Render
+# See RENDER-DEPLOYMENT.md for detailed instructions
+
 services:
   # Backend Web Service
   - type: web
