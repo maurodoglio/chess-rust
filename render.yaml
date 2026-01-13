@@ -3,6 +3,7 @@ services:
   - type: web
     name: chess-rust-backend
     runtime: docker
+    # Note: Update the repo URL to match your fork if you've forked this repository
     repo: https://github.com/maurodoglio/chess-rust
     region: oregon
     plan: free
@@ -17,6 +18,7 @@ services:
   - type: web
     name: chess-rust-frontend
     runtime: static
+    # Note: Update the repo URL to match your fork if you've forked this repository
     repo: https://github.com/maurodoglio/chess-rust
     region: oregon
     plan: free

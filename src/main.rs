@@ -41,7 +41,7 @@ async fn main() {
     let addr = format!("0.0.0.0:{}", port);
     let listener = tokio::net::TcpListener::bind(&addr)
         .await
-        .unwrap_or_else(|_| panic!("Failed to bind to address {}", addr));
+        .unwrap_or_else(|e| panic!("Failed to bind to address {}: {}", addr, e));
     
     tracing::info!("Chess server listening on {}", 
         listener.local_addr().expect("Failed to get local address"));
