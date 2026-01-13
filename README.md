@@ -112,7 +112,9 @@ Deploy both backend and frontend to the cloud with one click:
 3. Create a new Blueprint and connect your forked repository
 4. Render will automatically detect the `render.yaml` and deploy both services
 
-For detailed instructions, see [RENDER-DEPLOYMENT.md](RENDER-DEPLOYMENT.md)
+**📚 Documentation:**
+- [Quick Start Guide](RENDER-QUICKSTART.md) - Get started in 5 minutes
+- [Detailed Guide](RENDER-DEPLOYMENT.md) - Complete deployment documentation
 
 ### Option 2: Using Docker (Recommended for Local Development)
 
