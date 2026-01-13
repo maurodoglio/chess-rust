@@ -15,6 +15,16 @@ Both services are configured via the `render.yaml` file in the repository root f
 1. A [Render account](https://dashboard.render.com/register) (free tier available)
 2. Your chess-rust repository on GitHub
 
+**Optional: Validate Configuration**
+
+Before deploying, you can validate your configuration locally:
+
+```bash
+./validate-render.sh
+```
+
+This script checks that all required files are present and properly configured.
+
 ## Deployment Methods
 
 ### Method 1: Using render.yaml (Recommended)
