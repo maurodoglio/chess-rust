@@ -103,9 +103,22 @@ The game prevents illegal moves that would leave the player's own king in check.
 
 ## Running the Server
 
-### Option 1: Using Docker (Recommended for Production)
+### Option 1: Deploy to Render (Recommended for Cloud Deployment)
 
-The easiest way to run both backend and frontend together:
+Deploy both backend and frontend to the cloud with one click:
+
+1. Fork this repository to your GitHub account
+2. Sign up for a free [Render account](https://dashboard.render.com/register)
+3. Create a new Blueprint and connect your forked repository
+4. Render will automatically detect the `render.yaml` and deploy both services
+
+**📚 Documentation:**
+- [Quick Start Guide](RENDER-QUICKSTART.md) - Get started in 5 minutes
+- [Detailed Guide](RENDER-DEPLOYMENT.md) - Complete deployment documentation
+
+### Option 2: Using Docker (Recommended for Local Development)
+
+The easiest way to run both backend and frontend together locally:
 
 ```bash
 # Build and start both services
@@ -121,7 +134,7 @@ This will start:
 
 For detailed Docker deployment instructions, see [DOCKER.md](DOCKER.md)
 
-### Option 2: Running Locally
+### Option 3: Running Locally (for Development)
 
 #### Prerequisites
 - Rust 1.82 or later

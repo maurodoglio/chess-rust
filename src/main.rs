@@ -31,10 +31,17 @@ async fn main() {
         .layer(cors)
         .layer(tower_http::trace::TraceLayer::new_for_http());
 
+    // Get port from environment or default to 3000
+    let port = std::env::var("PORT")
+        .unwrap_or_else(|_| "3000".to_string())
+        .parse::<u16>()
+        .expect("PORT must be a valid number");
+    
     // Start the server
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
+    let addr = format!("0.0.0.0:{}", port);
+    let listener = tokio::net::TcpListener::bind(&addr)
         .await
-        .expect("Failed to bind to address 0.0.0.0:3000");
+        .unwrap_or_else(|e| panic!("Failed to bind to address {}: {}", addr, e));
     
     tracing::info!("Chess server listening on {}", 
         listener.local_addr().expect("Failed to get local address"));

@@ -1,0 +1,40 @@
+# Render Blueprint Configuration for Chess-Rust
+# This file enables one-click deployment of both backend and frontend to Render
+# See RENDER-DEPLOYMENT.md for detailed instructions
+
+services:
+  # Backend Web Service
+  - type: web
+    name: chess-rust-backend
+    runtime: docker
+    # Note: Update the repo URL to match your fork if you've forked this repository
+    repo: https://github.com/maurodoglio/chess-rust
+    region: oregon
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: RUST_LOG
+        value: info
+
+  # Frontend Static Site
+  - type: web
+    name: chess-rust-frontend
+    runtime: static
+    # Note: Update the repo URL to match your fork if you've forked this repository
+    repo: https://github.com/maurodoglio/chess-rust
+    region: oregon
+    plan: free
+    buildCommand: cd frontend && ./build.sh
+    staticPublishPath: ./frontend
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: API_URL
+        fromService:
+          type: web
+          name: chess-rust-backend
+          envVarKey: RENDER_EXTERNAL_URL

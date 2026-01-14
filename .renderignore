@@ -1,0 +1,28 @@
+# Render deployment ignore file
+# Similar to .gitignore, but for Render deployments
+
+# These files are not needed for deployment
+.git
+.github
+
+# Environment files (set via Render dashboard)
+.env
+.env.*
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Validation and development scripts
+validate-docker.sh
+
+# Note: For Docker builds, most files are needed in the build context
+# The Dockerfile and .dockerignore handle what actually gets into the image
