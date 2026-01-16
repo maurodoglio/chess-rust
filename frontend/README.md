@@ -7,6 +7,7 @@ A modern, responsive web frontend for the chess-rust multiplayer chess game.
 - **Beautiful UI**: Clean, modern interface with responsive design
 - **Real-time Updates**: Automatic polling for game state changes
 - **Easy Game Management**: Create, join, and list games with simple controls
+- **Spectator Mode**: Watch games in progress without joining as a player
 - **Visual Feedback**: Color-coded squares, piece selection, and status messages
 - **Unicode Pieces**: Uses Unicode chess symbols for a clean look
 - **Configurable API**: Easy to change backend API URL
@@ -54,6 +55,13 @@ Simply open the `index.html` file directly in your web browser. Note that some b
 
 1. Click "List Games" to see all available games
 2. Click on any game to join it
+
+### Watching a Game as Spectator
+
+1. Click "Watch Game" button
+2. Enter the Game ID of the game you want to watch
+3. Click "Watch" to view the game without joining
+4. As a spectator, you can see all moves in real-time but cannot make moves yourself
 
 ### Making Moves
 
