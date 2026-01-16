@@ -24,7 +24,7 @@ services:
     runtime: static
     # Note: Update the repo URL to match your fork if you've forked this repository
     repo: https://github.com/maurodoglio/chess-rust
-    plan: free
+    plan: starter
     buildCommand: cd frontend && ./build.sh
     staticPublishPath: ./frontend
     routes:
