@@ -318,6 +318,44 @@ impl ChessGame {
             self.status = GameStatus::Active;
         }
     }
+
+    /// Get all valid moves for a piece at the given position
+    /// Returns a vector of (row, col) tuples representing valid destination squares
+    pub fn get_valid_moves(&self, from_row: usize, from_col: usize) -> Vec<(usize, usize)> {
+        let mut valid_moves = Vec::new();
+
+        // Check if there's a piece at the source position
+        if let Some(piece) = self.board.get(from_row, from_col) {
+            // Try all possible destination squares
+            for to_row in 0..BOARD_SIZE {
+                for to_col in 0..BOARD_SIZE {
+                    let test_move = Move {
+                        from_row,
+                        from_col,
+                        to_row,
+                        to_col,
+                    };
+                    
+                    // Check if this is a valid move
+                    if self.is_valid_move(&test_move, &piece) {
+                        // Check destination doesn't have friendly piece
+                        if let Some(dest_piece) = self.board.get(to_row, to_col) {
+                            if dest_piece.color == piece.color {
+                                continue;
+                            }
+                        }
+                        
+                        // Check if move would leave king in check
+                        if !self.would_move_leave_king_in_check(&test_move, piece.color) {
+                            valid_moves.push((to_row, to_col));
+                        }
+                    }
+                }
+            }
+        }
+
+        valid_moves
+    }
 }
 
 impl Default for ChessGame {

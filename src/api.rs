@@ -46,6 +46,18 @@ pub struct GameInfo {
     pub is_full: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ValidMovesRequest {
+    pub player_id: String,
+    pub row: usize,
+    pub col: usize,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ValidMovesResponse {
+    pub valid_moves: Vec<(usize, usize)>,
+}
+
 pub fn create_router(game_state: GameState) -> Router {
     Router::new()
         .route("/health", get(health_check))
@@ -54,6 +66,7 @@ pub fn create_router(game_state: GameState) -> Router {
         .route("/games/:game_id", get(get_game))
         .route("/games/:game_id/join", post(join_game))
         .route("/games/:game_id/move", post(make_move))
+        .route("/games/:game_id/valid-moves", post(get_valid_moves))
         .with_state(game_state)
 }
 
@@ -166,4 +179,37 @@ async fn make_move(
             Json(ErrorResponse { error: err }),
         )),
     }
+}
+
+async fn get_valid_moves(
+    State(game_state): State<GameState>,
+    Path(game_id): Path<String>,
+    Json(request): Json<ValidMovesRequest>,
+) -> Result<Json<ValidMovesResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let session = match game_state.get_game(&game_id).await {
+        Some(s) => s,
+        None => {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    error: "Game not found".to_string(),
+                }),
+            ))
+        }
+    };
+
+    // Verify player is in the game
+    if !session.is_player_in_game(&request.player_id) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse {
+                error: "Player not in this game".to_string(),
+            }),
+        ));
+    }
+
+    // Get valid moves for the piece at the specified position
+    let valid_moves = session.game.get_valid_moves(request.row, request.col);
+    
+    Ok(Json(ValidMovesResponse { valid_moves }))
 }

@@ -12,6 +12,7 @@ class ChessApp {
         this.lastTurnColor = null;
         this.turnBannerShown = false;
         this.statusTimeout = null;
+        this.validMoves = [];
         
         this.initializeUI();
         this.attachEventListeners();
@@ -254,22 +255,47 @@ class ChessApp {
         document.getElementById('currentTurn').textContent = currentTurnColor;
         
         const status = this.gameState.game.status;
-        document.getElementById('gameStatus').textContent = status;
+        const statusElement = document.getElementById('gameStatus');
+        statusElement.textContent = status;
         
-        // Update status message based on turn
+        // Add status-specific styling
+        statusElement.className = '';
+        if (status === 'Check') {
+            statusElement.classList.add('status-check');
+        } else if (status === 'Checkmate') {
+            statusElement.classList.add('status-checkmate');
+        } else if (status === 'Stalemate') {
+            statusElement.classList.add('status-stalemate');
+        }
+        
+        // Update status message based on turn and game state
         if (this.playerColor) {
             const isMyTurn = currentTurnColor.toLowerCase() === this.playerColor.toLowerCase();
             
-            // Show the turn banner when turn changes to the player's turn
-            if (isMyTurn && status === 'Active') {
-                if (this.lastTurnColor !== currentTurnColor || !this.turnBannerShown) {
-                    this.showStatus("It's your turn!", 'success', true); // persistent banner
-                    this.turnBannerShown = true;
+            // Clear status message and show game state in banner
+            if (status === 'Checkmate') {
+                const winner = currentTurnColor === 'White' ? 'Black' : 'White';
+                this.showStatus(`Checkmate! ${winner} wins!`, 'error', true);
+                this.turnBannerShown = false;
+            } else if (status === 'Stalemate') {
+                this.showStatus('Stalemate! Game is a draw.', 'info', true);
+                this.turnBannerShown = false;
+            } else if (status === 'Check') {
+                if (isMyTurn) {
+                    this.showStatus('Check! Your king is in danger!', 'error', true);
+                    this.turnBannerShown = false;
+                } else {
+                    this.showStatus('Check! You have the advantage!', 'success', true);
+                    this.turnBannerShown = false;
                 }
-            } else {
-                // Clear the turn banner when it's not the player's turn
-                if (this.turnBannerShown) {
-                    this.clearStatus();
+            } else if (status === 'Active') {
+                // Show the turn banner when turn changes to the player's turn
+                if (isMyTurn && (this.lastTurnColor !== currentTurnColor || !this.turnBannerShown)) {
+                    this.showStatus("It's your turn!", 'success', true);
+                    this.turnBannerShown = true;
+                } else if (!isMyTurn && this.turnBannerShown) {
+                    // Keep status visible showing opponent's turn
+                    this.showStatus("Waiting for opponent's move...", 'info', true);
                     this.turnBannerShown = false;
                 }
             }
@@ -323,7 +349,7 @@ class ChessApp {
         return symbols[piece.color][piece.piece_type] || '';
     }
 
-    handleSquareClick(row, col) {
+    async handleSquareClick(row, col) {
         if (!this.gameId || !this.playerColor || !this.gameState) {
             this.showStatus('Join a game first!', 'error');
             return;
@@ -341,12 +367,44 @@ class ChessApp {
             const piece = this.gameState.game.board.squares[row][col];
             if (piece && piece.color.toLowerCase() === this.playerColor.toLowerCase()) {
                 this.selectedSquare = { row, col };
-                this.highlightSquare(row, col, true);
-                this.showStatus('Select destination square', 'info');
+                await this.fetchAndShowValidMoves(row, col);
+                this.showStatus('Select destination square', 'info', true);
             }
         } else {
             // If a square is already selected, try to make a move
-            this.makeMove(this.selectedSquare.row, this.selectedSquare.col, row, col);
+            await this.makeMove(this.selectedSquare.row, this.selectedSquare.col, row, col);
+        }
+    }
+
+    async fetchAndShowValidMoves(row, col) {
+        try {
+            const response = await fetch(`${this.apiUrl}/games/${this.gameId}/valid-moves`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    player_id: this.playerId,
+                    row: row,
+                    col: col
+                })
+            });
+            
+            if (!response.ok) {
+                console.error('Failed to fetch valid moves');
+                this.validMoves = [];
+                this.highlightSquare(row, col, true);
+                return;
+            }
+            
+            const data = await response.json();
+            this.validMoves = data.valid_moves;
+            this.highlightSquare(row, col, true);
+            this.highlightValidMoves(this.validMoves);
+        } catch (error) {
+            console.error('Error fetching valid moves:', error);
+            this.validMoves = [];
+            this.highlightSquare(row, col, true);
         }
     }
 
@@ -362,6 +420,16 @@ class ChessApp {
                 square.classList.add('selected');
             }
         }
+    }
+
+    highlightValidMoves(validMoves) {
+        // Add valid-move class to all valid destination squares
+        validMoves.forEach(([row, col]) => {
+            const square = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            if (square) {
+                square.classList.add('valid-move');
+            }
+        });
     }
 
     async makeMove(fromRow, fromCol, toRow, toCol) {
@@ -395,13 +463,15 @@ class ChessApp {
             this.updateGameInfo();
             
             this.selectedSquare = null;
+            this.validMoves = [];
             this.highlightSquare(null, null, false);
             
             this.turnBannerShown = false; // Reset turn banner flag after move
-            this.showStatus('Move made successfully!', 'success');
+            // Don't show "Move made successfully" - let game status be visible
         } catch (error) {
             this.showStatus('Error: ' + error.message, 'error');
             this.selectedSquare = null;
+            this.validMoves = [];
             this.highlightSquare(null, null, false);
         }
     }
