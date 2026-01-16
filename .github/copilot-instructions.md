@@ -4,6 +4,38 @@
 
 This is a multiplayer web chess game backend implementation built in Rust using the Axum web framework. The server provides a REST API that enables players to create games, join games, and make moves from different devices.
 
+## Required Before Each Commit
+
+- Run `cargo fmt` before committing any changes to ensure proper code formatting
+- Run `cargo test` to ensure all tests pass
+- Run `cargo clippy` to check for common mistakes and improve code quality
+- Ensure `cargo build` completes without errors
+
+## Development Flow
+
+- **Build**: `cargo build` - Compile the project
+- **Run**: `cargo run` - Start the server on `http://0.0.0.0:3000`
+- **Test**: `cargo test` - Run all unit tests (16 tests should pass)
+- **Format**: `cargo fmt` - Format code according to Rust style guidelines
+- **Lint**: `cargo clippy` - Run linter to catch common mistakes
+
+## Repository Structure
+
+```
+src/
+├── main.rs           # Application entry point, server setup
+├── api.rs            # REST API handlers and routing
+├── chess/
+│   ├── mod.rs        # Chess module exports
+│   ├── piece.rs      # Piece types (Pawn, Knight, Bishop, Rook, Queen, King) and colors
+│   ├── board.rs      # 8x8 board representation and manipulation
+│   └── game.rs       # Game rules, move validation, check/checkmate detection
+└── game/
+    ├── mod.rs        # Game module exports
+    ├── session.rs    # Game session and player management
+    └── state.rs      # Shared state for multiple concurrent games
+```
+
 ## Architecture
 
 The project is organized into three main modules:
@@ -56,17 +88,17 @@ The project is organized into three main modules:
 - Test edge cases and boundary conditions (e.g., out of bounds, invalid coordinates)
 - Run `cargo test` before committing changes
 
-## Build and Development
+## Key Guidelines
 
-### Commands
+1. Follow Rust best practices and idiomatic patterns
+2. Maintain existing code structure and organization
+3. Write unit tests for new functionality using `#[cfg(test)]` modules
+4. Use descriptive test names that explain what is being tested
+5. Document complex logic with clear comments
+6. Validate all user input before processing
+7. Use proper error handling with `Result<T, E>` types
 
-- Build: `cargo build`
-- Run: `cargo run` (starts server on `http://0.0.0.0:3000`)
-- Test: `cargo test`
-- Format: `cargo fmt`
-- Lint: `cargo clippy`
-
-### Dependencies
+## Dependencies
 
 - **axum**: Web framework for REST API
 - **tokio**: Async runtime

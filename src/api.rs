@@ -117,10 +117,7 @@ async fn join_game(
                 color: color_str.to_string(),
             }))
         }
-        Err(err) => Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: err }),
-        )),
+        Err(err) => Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: err }))),
     }
 }
 
@@ -152,7 +149,8 @@ async fn make_move(
     }
 
     // Verify it's the player's turn
-    let player_color = session.get_player_color(&request.player_id)
+    let player_color = session
+        .get_player_color(&request.player_id)
         .expect("Player color should exist after verifying player is in game");
     if player_color != session.game.current_turn {
         return Err((
@@ -169,10 +167,7 @@ async fn make_move(
             game_state.update_game(&game_id, session.clone()).await;
             Ok(Json(session))
         }
-        Err(err) => Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: err }),
-        )),
+        Err(err) => Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: err }))),
     }
 }
 
