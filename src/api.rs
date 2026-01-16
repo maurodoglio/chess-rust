@@ -31,6 +31,11 @@ pub struct MakeMoveRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct PlayerActionRequest {
+    pub player_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ErrorResponse {
     pub error: String,
 }
@@ -54,6 +59,9 @@ pub fn create_router(game_state: GameState) -> Router {
         .route("/games/:game_id", get(get_game))
         .route("/games/:game_id/join", post(join_game))
         .route("/games/:game_id/move", post(make_move))
+        .route("/games/:game_id/resign", post(resign_game))
+        .route("/games/:game_id/offer-draw", post(offer_draw))
+        .route("/games/:game_id/accept-draw", post(accept_draw))
         .with_state(game_state)
 }
 
@@ -157,6 +165,135 @@ async fn make_move(
 
     // Make the move
     match session.game.make_move(request.chess_move) {
+        Ok(_) => {
+            game_state.update_game(&game_id, session.clone()).await;
+            Ok(Json(session))
+        }
+        Err(err) => Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse { error: err }),
+        )),
+    }
+}
+
+async fn resign_game(
+    State(game_state): State<GameState>,
+    Path(game_id): Path<String>,
+    Json(request): Json<PlayerActionRequest>,
+) -> Result<Json<GameSession>, (StatusCode, Json<ErrorResponse>)> {
+    let mut session = match game_state.get_game(&game_id).await {
+        Some(s) => s,
+        None => {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    error: "Game not found".to_string(),
+                }),
+            ))
+        }
+    };
+
+    // Verify player is in the game
+    if !session.is_player_in_game(&request.player_id) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse {
+                error: "Player not in this game".to_string(),
+            }),
+        ));
+    }
+
+    let player_color = session.get_player_color(&request.player_id)
+        .expect("Player color should exist after verifying player is in game");
+
+    // Resign the game
+    match session.game.resign(player_color) {
+        Ok(_) => {
+            game_state.update_game(&game_id, session.clone()).await;
+            Ok(Json(session))
+        }
+        Err(err) => Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse { error: err }),
+        )),
+    }
+}
+
+async fn offer_draw(
+    State(game_state): State<GameState>,
+    Path(game_id): Path<String>,
+    Json(request): Json<PlayerActionRequest>,
+) -> Result<Json<GameSession>, (StatusCode, Json<ErrorResponse>)> {
+    let mut session = match game_state.get_game(&game_id).await {
+        Some(s) => s,
+        None => {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    error: "Game not found".to_string(),
+                }),
+            ))
+        }
+    };
+
+    // Verify player is in the game
+    if !session.is_player_in_game(&request.player_id) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse {
+                error: "Player not in this game".to_string(),
+            }),
+        ));
+    }
+
+    let player_color = session.get_player_color(&request.player_id)
+        .expect("Player color should exist after verifying player is in game");
+
+    // Offer a draw
+    match session.game.offer_draw(player_color) {
+        Ok(_) => {
+            game_state.update_game(&game_id, session.clone()).await;
+            Ok(Json(session))
+        }
+        Err(err) => Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse { error: err }),
+        )),
+    }
+}
+
+async fn accept_draw(
+    State(game_state): State<GameState>,
+    Path(game_id): Path<String>,
+    Json(request): Json<PlayerActionRequest>,
+) -> Result<Json<GameSession>, (StatusCode, Json<ErrorResponse>)> {
+    let mut session = match game_state.get_game(&game_id).await {
+        Some(s) => s,
+        None => {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    error: "Game not found".to_string(),
+                }),
+            ))
+        }
+    };
+
+    // Verify player is in the game
+    if !session.is_player_in_game(&request.player_id) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse {
+                error: "Player not in this game".to_string(),
+            }),
+        ));
+    }
+
+    let player_color = session.get_player_color(&request.player_id)
+        .expect("Player color should exist after verifying player is in game");
+
+    // Accept the draw
+    match session.game.accept_draw(player_color) {
         Ok(_) => {
             game_state.update_game(&game_id, session.clone()).await;
             Ok(Json(session))
