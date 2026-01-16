@@ -19,6 +19,8 @@ pub enum GameStatus {
     Checkmate,
     Stalemate,
     Draw,
+    Resigned,
+    DrawOffered,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -31,6 +33,7 @@ pub struct ChessGame {
     pub captured_by_black: Vec<Piece>,
     pub white_score: u32,
     pub black_score: u32,
+    pub draw_offered_by: Option<Color>,
 }
 
 impl ChessGame {
@@ -44,13 +47,23 @@ impl ChessGame {
             captured_by_black: Vec::new(),
             white_score: 0,
             black_score: 0,
+            draw_offered_by: None,
         }
     }
 
     pub fn make_move(&mut self, chess_move: Move) -> Result<(), String> {
         // Check if game is already over
-        if self.status == GameStatus::Checkmate || self.status == GameStatus::Stalemate {
+        if self.status == GameStatus::Checkmate 
+            || self.status == GameStatus::Stalemate
+            || self.status == GameStatus::Resigned
+            || self.status == GameStatus::Draw {
             return Err("Game is already over".to_string());
+        }
+
+        // Clear any pending draw offer when a move is made
+        self.draw_offered_by = None;
+        if self.status == GameStatus::DrawOffered {
+            self.status = GameStatus::Active;
         }
 
         // Basic validation
@@ -314,9 +327,62 @@ impl ChessGame {
             self.status = GameStatus::Stalemate;
         } else if in_check {
             self.status = GameStatus::Check;
+        } else if self.draw_offered_by.is_some() {
+            self.status = GameStatus::DrawOffered;
         } else {
             self.status = GameStatus::Active;
         }
+    }
+
+    /// Resign the game for the given color
+    pub fn resign(&mut self, color: Color) -> Result<(), String> {
+        // Check if game is already over
+        if self.status == GameStatus::Checkmate 
+            || self.status == GameStatus::Stalemate
+            || self.status == GameStatus::Resigned
+            || self.status == GameStatus::Draw {
+            return Err("Game is already over".to_string());
+        }
+
+        self.status = GameStatus::Resigned;
+        Ok(())
+    }
+
+    /// Offer a draw for the given color
+    pub fn offer_draw(&mut self, color: Color) -> Result<(), String> {
+        // Check if game is already over
+        if self.status == GameStatus::Checkmate 
+            || self.status == GameStatus::Stalemate
+            || self.status == GameStatus::Resigned
+            || self.status == GameStatus::Draw {
+            return Err("Game is already over".to_string());
+        }
+
+        // Check if it's this player's turn
+        if self.current_turn != color {
+            return Err("Not your turn to offer a draw".to_string());
+        }
+
+        self.draw_offered_by = Some(color);
+        self.status = GameStatus::DrawOffered;
+        Ok(())
+    }
+
+    /// Accept a draw offer for the given color
+    pub fn accept_draw(&mut self, color: Color) -> Result<(), String> {
+        // Check if there is a draw offer
+        if self.draw_offered_by.is_none() {
+            return Err("No draw offer to accept".to_string());
+        }
+
+        // Check if the draw was offered by the opponent
+        if self.draw_offered_by == Some(color) {
+            return Err("You cannot accept your own draw offer".to_string());
+        }
+
+        self.status = GameStatus::Draw;
+        self.draw_offered_by = None;
+        Ok(())
     }
 }
 
@@ -666,5 +732,154 @@ mod tests {
         };
         assert!(game.make_move(chess_move).is_ok());
         assert_eq!(game.status, GameStatus::Active);
+    }
+
+    #[test]
+    fn test_resign_white() {
+        let mut game = ChessGame::new();
+        assert_eq!(game.status, GameStatus::Active);
+        
+        let result = game.resign(Color::White);
+        assert!(result.is_ok());
+        assert_eq!(game.status, GameStatus::Resigned);
+    }
+
+    #[test]
+    fn test_resign_black() {
+        let mut game = ChessGame::new();
+        assert_eq!(game.status, GameStatus::Active);
+        
+        let result = game.resign(Color::Black);
+        assert!(result.is_ok());
+        assert_eq!(game.status, GameStatus::Resigned);
+    }
+
+    #[test]
+    fn test_cannot_resign_after_checkmate() {
+        let mut game = ChessGame::new();
+        game.status = GameStatus::Checkmate;
+        
+        let result = game.resign(Color::White);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Game is already over");
+    }
+
+    #[test]
+    fn test_cannot_move_after_resignation() {
+        let mut game = ChessGame::new();
+        game.resign(Color::White).unwrap();
+        
+        let chess_move = Move {
+            from_row: 1,
+            from_col: 4,
+            to_row: 2,
+            to_col: 4,
+        };
+        let result = game.make_move(chess_move);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Game is already over");
+    }
+
+    #[test]
+    fn test_offer_draw() {
+        let mut game = ChessGame::new();
+        assert_eq!(game.status, GameStatus::Active);
+        assert_eq!(game.draw_offered_by, None);
+        
+        let result = game.offer_draw(Color::White);
+        assert!(result.is_ok());
+        assert_eq!(game.status, GameStatus::DrawOffered);
+        assert_eq!(game.draw_offered_by, Some(Color::White));
+    }
+
+    #[test]
+    fn test_cannot_offer_draw_on_opponent_turn() {
+        let mut game = ChessGame::new();
+        assert_eq!(game.current_turn, Color::White);
+        
+        let result = game.offer_draw(Color::Black);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Not your turn to offer a draw");
+    }
+
+    #[test]
+    fn test_accept_draw() {
+        let mut game = ChessGame::new();
+        
+        // White offers draw
+        game.offer_draw(Color::White).unwrap();
+        assert_eq!(game.status, GameStatus::DrawOffered);
+        
+        // Black accepts draw
+        let result = game.accept_draw(Color::Black);
+        assert!(result.is_ok());
+        assert_eq!(game.status, GameStatus::Draw);
+        assert_eq!(game.draw_offered_by, None);
+    }
+
+    #[test]
+    fn test_cannot_accept_own_draw_offer() {
+        let mut game = ChessGame::new();
+        
+        // White offers draw
+        game.offer_draw(Color::White).unwrap();
+        
+        // White tries to accept own draw
+        let result = game.accept_draw(Color::White);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "You cannot accept your own draw offer");
+    }
+
+    #[test]
+    fn test_cannot_accept_draw_without_offer() {
+        let mut game = ChessGame::new();
+        
+        let result = game.accept_draw(Color::Black);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "No draw offer to accept");
+    }
+
+    #[test]
+    fn test_draw_offer_cleared_on_move() {
+        let mut game = ChessGame::new();
+        
+        // White offers draw
+        game.offer_draw(Color::White).unwrap();
+        assert_eq!(game.draw_offered_by, Some(Color::White));
+        assert_eq!(game.status, GameStatus::DrawOffered);
+        
+        // White makes a move instead
+        let chess_move = Move {
+            from_row: 1,
+            from_col: 4,
+            to_row: 2,
+            to_col: 4,
+        };
+        game.make_move(chess_move).unwrap();
+        
+        // Draw offer should be cleared
+        assert_eq!(game.draw_offered_by, None);
+        assert_eq!(game.status, GameStatus::Active);
+    }
+
+    #[test]
+    fn test_cannot_move_after_draw_accepted() {
+        let mut game = ChessGame::new();
+        
+        // Offer and accept draw
+        game.offer_draw(Color::White).unwrap();
+        game.accept_draw(Color::Black).unwrap();
+        assert_eq!(game.status, GameStatus::Draw);
+        
+        // Try to make a move
+        let chess_move = Move {
+            from_row: 1,
+            from_col: 4,
+            to_row: 2,
+            to_col: 4,
+        };
+        let result = game.make_move(chess_move);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Game is already over");
     }
 }
