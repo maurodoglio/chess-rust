@@ -52,6 +52,7 @@ pub fn create_router(game_state: GameState) -> Router {
         .route("/games", post(create_game))
         .route("/games/list", get(list_games))
         .route("/games/:game_id", get(get_game))
+        .route("/games/:game_id/spectate", get(spectate_game))
         .route("/games/:game_id/join", post(join_game))
         .route("/games/:game_id/move", post(make_move))
         .with_state(game_state)
@@ -80,6 +81,21 @@ async fn list_games(
 }
 
 async fn get_game(
+    State(game_state): State<GameState>,
+    Path(game_id): Path<String>,
+) -> Result<Json<GameSession>, (StatusCode, Json<ErrorResponse>)> {
+    match game_state.get_game(&game_id).await {
+        Some(session) => Ok(Json(session)),
+        None => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse {
+                error: "Game not found".to_string(),
+            }),
+        )),
+    }
+}
+
+async fn spectate_game(
     State(game_state): State<GameState>,
     Path(game_id): Path<String>,
 ) -> Result<Json<GameSession>, (StatusCode, Json<ErrorResponse>)> {
