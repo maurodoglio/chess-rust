@@ -7,6 +7,7 @@ A multiplayer web chess game backend implementation built in Rust. This server p
 - **Complete Chess Game Logic**: Full implementation of chess rules including piece movement validation
 - **Check, Checkmate, and Stalemate Detection**: Automatically detects check, checkmate, and stalemate conditions
 - **Move Validation**: Prevents illegal moves that would leave the king in check
+- **Captured Pieces and Score Tracking**: Automatically tracks captured pieces and calculates running scores based on piece values (Pawn: 1, Knight/Bishop: 3, Rook: 5, Queen: 9)
 - **Multiplayer Support**: Players can join games from different devices and play in real-time
 - **REST API**: Simple HTTP endpoints for game management
 - **Game State Management**: Maintains multiple simultaneous games with proper state tracking
@@ -51,7 +52,13 @@ Returns:
 ```
 GET /games/:game_id
 ```
-Returns the complete game state including board, players, and move history.
+Returns the complete game state including:
+- Board position with all pieces
+- Current turn and game status
+- Both players' information
+- Move history
+- **Captured pieces**: Lists all pieces captured by each player
+- **Scores**: Running point totals based on captured piece values
 
 ### Join a Game
 ```
@@ -87,17 +94,66 @@ Content-Type: application/json
 ```
 Returns the updated game state.
 
+### Resign from a Game
+```
+POST /games/:game_id/resign
+Content-Type: application/json
+
+{
+  "player_id": "your-player-id"
+}
+```
+Resigns the game on behalf of the player. The game status will be set to `Resigned`. Returns the updated game state.
+
+### Offer a Draw
+```
+POST /games/:game_id/offer-draw
+Content-Type: application/json
+
+{
+  "player_id": "your-player-id"
+}
+```
+Offers a draw to the opponent. The game status will be set to `DrawOffered`. Returns the updated game state.
+
+**Note**: You can only offer a draw on your turn.
+
+### Accept a Draw
+```
+POST /games/:game_id/accept-draw
+Content-Type: application/json
+
+{
+  "player_id": "your-player-id"
+}
+```
+Accepts a draw offer from the opponent. The game status will be set to `Draw`. Returns the updated game state.
+
+**Note**: You cannot accept your own draw offer.
+
 **Coordinate System**: The board uses a 0-7 coordinate system where:
 - Row 0 = White's back rank (a1-h1)
 - Row 7 = Black's back rank (a8-h8)
 - Col 0-7 = Files a-h
+
+**Captured Pieces and Scoring**: The game automatically tracks:
+- All pieces captured by each player in `captured_by_white` and `captured_by_black` arrays
+- Running score totals in `white_score` and `black_score` based on standard chess piece values:
+  - Pawn: 1 point
+  - Knight: 3 points
+  - Bishop: 3 points
+  - Rook: 5 points
+  - Queen: 9 points
+  - King: 0 points (cannot be captured)
 
 **Game Status**: The game automatically tracks and updates the status:
 - `Active`: Normal play continues
 - `Check`: Current player's king is in check
 - `Checkmate`: Current player is checkmated (game over)
 - `Stalemate`: Current player has no legal moves but is not in check (game over)
-- `Draw`: Game has been declared a draw
+- `Draw`: Game has been declared a draw (by agreement)
+- `Resigned`: A player has resigned (game over)
+- `DrawOffered`: A draw has been offered and is awaiting response
 
 The game prevents illegal moves that would leave the player's own king in check.
 
