@@ -18,10 +18,10 @@ impl GameState {
     pub async fn create_game(&self) -> String {
         let session = GameSession::new();
         let game_id = session.id.clone();
-        
+
         let mut games = self.games.write().await;
         games.insert(game_id.clone(), session);
-        
+
         game_id
     }
 
@@ -40,9 +40,13 @@ impl GameState {
         }
     }
 
-    pub async fn join_game(&self, game_id: &str, player_id: String) -> Result<crate::chess::Color, String> {
+    pub async fn join_game(
+        &self,
+        game_id: &str,
+        player_id: String,
+    ) -> Result<crate::chess::Color, String> {
         let mut games = self.games.write().await;
-        
+
         if let Some(session) = games.get_mut(game_id) {
             session.add_player(player_id)
         } else {
