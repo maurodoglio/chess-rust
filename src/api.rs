@@ -99,15 +99,9 @@ async fn spectate_game(
     State(game_state): State<GameState>,
     Path(game_id): Path<String>,
 ) -> Result<Json<GameSession>, (StatusCode, Json<ErrorResponse>)> {
-    match game_state.get_game(&game_id).await {
-        Some(session) => Ok(Json(session)),
-        None => Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse {
-                error: "Game not found".to_string(),
-            }),
-        )),
-    }
+    // Spectate endpoint provides the same functionality as get_game,
+    // but with a more semantic name for viewing games without joining
+    get_game(State(game_state), Path(game_id)).await
 }
 
 async fn join_game(
