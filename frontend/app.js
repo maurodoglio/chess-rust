@@ -6,6 +6,7 @@ class ChessApp {
         this.gameId = null;
         this.playerId = this.generatePlayerId();
         this.playerColor = null;
+        this.isSpectator = false;
         this.selectedSquare = null;
         this.gameState = null;
         this.pollInterval = null;
@@ -62,8 +63,10 @@ class ChessApp {
     attachEventListeners() {
         document.getElementById('newGameBtn').addEventListener('click', () => this.createNewGame());
         document.getElementById('joinGameBtn').addEventListener('click', () => this.showJoinGameModal());
+        document.getElementById('watchGameBtn').addEventListener('click', () => this.showWatchGameModal());
         document.getElementById('listGamesBtn').addEventListener('click', () => this.listGames());
         document.getElementById('joinGameSubmit').addEventListener('click', () => this.joinGameFromModal());
+        document.getElementById('watchGameSubmit').addEventListener('click', () => this.watchGameFromModal());
         document.getElementById('updateApiBtn').addEventListener('click', () => this.updateApiUrl());
         
         // Modal close buttons
@@ -113,6 +116,58 @@ class ChessApp {
         document.getElementById('joinGameModal').style.display = 'flex';
     }
 
+    showWatchGameModal() {
+        document.getElementById('watchGameModal').style.display = 'flex';
+    }
+
+    async watchGameFromModal() {
+        const gameId = document.getElementById('watchGameIdInput').value.trim();
+        if (!gameId) {
+            this.showStatus('Please enter a game ID', 'error');
+            return;
+        }
+        
+        document.getElementById('watchGameModal').style.display = 'none';
+        await this.watchGame(gameId);
+    }
+
+    async watchGame(gameId) {
+        try {
+            this.showStatus('Loading game as spectator...', 'info');
+            const response = await fetch(`${this.apiUrl}/games/${gameId}/spectate`);
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to load game');
+            }
+            
+            const data = await response.json();
+            this.gameId = gameId;
+            this.playerColor = null;
+            this.isSpectator = true;
+            
+            document.getElementById('playerInfo').style.display = 'block';
+            document.getElementById('gameId').textContent = this.gameId;
+            document.getElementById('playerColorInfo').style.display = 'none';
+            document.getElementById('spectatorInfo').style.display = 'block';
+            
+            this.showStatus('Watching game as spectator!', 'success');
+            
+            // Create the board with default white orientation
+            this.createBoard();
+            
+            // Start polling for game updates
+            this.startPolling();
+            
+            // Load initial game state
+            this.gameState = data;
+            this.renderBoard();
+            this.updateGameInfo();
+        } catch (error) {
+            this.showStatus('Error watching game: ' + error.message, 'error');
+        }
+    }
+
     async joinGameFromModal() {
         const gameId = document.getElementById('gameIdInput').value.trim();
         if (!gameId) {
@@ -145,10 +200,13 @@ class ChessApp {
             const data = await response.json();
             this.gameId = gameId;
             this.playerColor = data.color;
+            this.isSpectator = false;
             
             document.getElementById('playerInfo').style.display = 'block';
             document.getElementById('gameId').textContent = this.gameId;
             document.getElementById('playerColor').textContent = this.playerColor;
+            document.getElementById('playerColorInfo').style.display = 'block';
+            document.getElementById('spectatorInfo').style.display = 'none';
             
             this.showStatus(`Joined as ${this.playerColor}!`, 'success');
             
@@ -324,8 +382,19 @@ class ChessApp {
     }
 
     handleSquareClick(row, col) {
-        if (!this.gameId || !this.playerColor || !this.gameState) {
-            this.showStatus('Join a game first!', 'error');
+        if (!this.gameId || !this.gameState) {
+            this.showStatus('Join or watch a game first!', 'error');
+            return;
+        }
+        
+        // Prevent moves if spectator
+        if (this.isSpectator) {
+            this.showStatus('You are a spectator and cannot make moves', 'error');
+            return;
+        }
+        
+        if (!this.playerColor) {
+            this.showStatus('Join a game first to make moves!', 'error');
             return;
         }
         
