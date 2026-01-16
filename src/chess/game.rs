@@ -705,4 +705,41 @@ mod tests {
         assert!(game.make_move(chess_move).is_ok());
         assert_eq!(game.status, GameStatus::Active);
     }
+
+    #[test]
+    fn test_get_valid_moves_for_pawn() {
+        let game = ChessGame::new();
+        
+        // Get valid moves for white pawn at e2 (1, 4)
+        let valid_moves = game.get_valid_moves(1, 4);
+        
+        // Should be able to move forward one or two squares
+        assert_eq!(valid_moves.len(), 2);
+        assert!(valid_moves.contains(&(2, 4))); // e3
+        assert!(valid_moves.contains(&(3, 4))); // e4
+    }
+
+    #[test]
+    fn test_get_valid_moves_for_knight() {
+        let game = ChessGame::new();
+        
+        // Get valid moves for white knight at b1 (0, 1)
+        let valid_moves = game.get_valid_moves(0, 1);
+        
+        // Knight should be able to move to a3 and c3
+        assert_eq!(valid_moves.len(), 2);
+        assert!(valid_moves.contains(&(2, 0))); // a3
+        assert!(valid_moves.contains(&(2, 2))); // c3
+    }
+
+    #[test]
+    fn test_get_valid_moves_empty_square() {
+        let game = ChessGame::new();
+        
+        // Get valid moves for empty square
+        let valid_moves = game.get_valid_moves(4, 4);
+        
+        // Should return empty vector
+        assert_eq!(valid_moves.len(), 0);
+    }
 }
