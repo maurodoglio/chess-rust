@@ -87,6 +87,43 @@ Content-Type: application/json
 ```
 Returns the updated game state.
 
+### Resign from a Game
+```
+POST /games/:game_id/resign
+Content-Type: application/json
+
+{
+  "player_id": "your-player-id"
+}
+```
+Resigns the game on behalf of the player. The game status will be set to `Resigned`. Returns the updated game state.
+
+### Offer a Draw
+```
+POST /games/:game_id/offer-draw
+Content-Type: application/json
+
+{
+  "player_id": "your-player-id"
+}
+```
+Offers a draw to the opponent. The game status will be set to `DrawOffered`. Returns the updated game state.
+
+**Note**: You can only offer a draw on your turn.
+
+### Accept a Draw
+```
+POST /games/:game_id/accept-draw
+Content-Type: application/json
+
+{
+  "player_id": "your-player-id"
+}
+```
+Accepts a draw offer from the opponent. The game status will be set to `Draw`. Returns the updated game state.
+
+**Note**: You cannot accept your own draw offer.
+
 **Coordinate System**: The board uses a 0-7 coordinate system where:
 - Row 0 = White's back rank (a1-h1)
 - Row 7 = Black's back rank (a8-h8)
@@ -97,7 +134,9 @@ Returns the updated game state.
 - `Check`: Current player's king is in check
 - `Checkmate`: Current player is checkmated (game over)
 - `Stalemate`: Current player has no legal moves but is not in check (game over)
-- `Draw`: Game has been declared a draw
+- `Draw`: Game has been declared a draw (by agreement)
+- `Resigned`: A player has resigned (game over)
+- `DrawOffered`: A draw has been offered and is awaiting response
 
 The game prevents illegal moves that would leave the player's own king in check.
 
