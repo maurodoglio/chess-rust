@@ -8,6 +8,7 @@ A multiplayer web chess game backend implementation built in Rust. This server p
 - **Check, Checkmate, and Stalemate Detection**: Automatically detects check, checkmate, and stalemate conditions
 - **Move Validation**: Prevents illegal moves that would leave the king in check
 - **Multiplayer Support**: Players can join games from different devices and play in real-time
+- **Spectator Mode**: Watch games in progress without joining as a player
 - **REST API**: Simple HTTP endpoints for game management
 - **Game State Management**: Maintains multiple simultaneous games with proper state tracking
 - **CORS Enabled**: Ready for web frontend integration
@@ -52,6 +53,12 @@ Returns:
 GET /games/:game_id
 ```
 Returns the complete game state including board, players, and move history.
+
+### Spectate a Game
+```
+GET /games/:game_id/spectate
+```
+Watch a game in progress without joining as a player. Returns the complete game state including board, players, and move history. This endpoint is identical to the get game state endpoint but is semantically clearer for spectator functionality.
 
 ### Join a Game
 ```
@@ -236,6 +243,9 @@ curl -X POST http://localhost:3000/games/$GAME_ID/move \
       "to_col": 4
     }
   }'
+
+# Spectate the game (anyone can watch without joining)
+curl http://localhost:3000/games/$GAME_ID/spectate
 ```
 
 ## Future Enhancements
@@ -248,7 +258,6 @@ Potential improvements for this backend:
 - Move history and game replay
 - En passant and castling support
 - Game timers and time controls
-- Spectator mode
 - Game ratings and statistics
 
 ## License

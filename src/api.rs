@@ -183,3 +183,63 @@ async fn make_move(
         )),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::chess::Color;
+
+    #[tokio::test]
+    async fn test_spectate_game_not_found() {
+        let game_state = GameState::new();
+        let result = spectate_game(
+            State(game_state),
+            Path("nonexistent-game-id".to_string()),
+        )
+        .await;
+
+        assert!(result.is_err());
+        let (status, _) = result.unwrap_err();
+        assert_eq!(status, StatusCode::NOT_FOUND);
+    }
+
+    #[tokio::test]
+    async fn test_spectate_game_success() {
+        let game_state = GameState::new();
+        let game_id = game_state.create_game().await;
+
+        let result = spectate_game(State(game_state.clone()), Path(game_id.clone())).await;
+
+        assert!(result.is_ok());
+        let game_session = result.unwrap().0;
+        assert_eq!(game_session.id, game_id);
+        assert_eq!(game_session.game.current_turn, Color::White);
+    }
+
+    #[tokio::test]
+    async fn test_spectate_game_with_players() {
+        let game_state = GameState::new();
+        let game_id = game_state.create_game().await;
+
+        // Add players
+        game_state
+            .join_game(&game_id, "player1".to_string())
+            .await
+            .unwrap();
+        game_state
+            .join_game(&game_id, "player2".to_string())
+            .await
+            .unwrap();
+
+        // Spectate the game
+        let result = spectate_game(State(game_state), Path(game_id.clone())).await;
+
+        assert!(result.is_ok());
+        let game_session = result.unwrap().0;
+        assert_eq!(game_session.id, game_id);
+        assert!(game_session.white_player.is_some());
+        assert!(game_session.black_player.is_some());
+        assert_eq!(game_session.white_player.unwrap().id, "player1");
+        assert_eq!(game_session.black_player.unwrap().id, "player2");
+    }
+}
