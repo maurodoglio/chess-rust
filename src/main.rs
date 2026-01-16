@@ -36,16 +36,18 @@ async fn main() {
         .unwrap_or_else(|_| "3000".to_string())
         .parse::<u16>()
         .expect("PORT must be a valid number");
-    
+
     // Start the server
     let addr = format!("0.0.0.0:{}", port);
     let listener = tokio::net::TcpListener::bind(&addr)
         .await
         .unwrap_or_else(|e| panic!("Failed to bind to address {}: {}", addr, e));
-    
-    tracing::info!("Chess server listening on {}", 
-        listener.local_addr().expect("Failed to get local address"));
-    
+
+    tracing::info!(
+        "Chess server listening on {}",
+        listener.local_addr().expect("Failed to get local address")
+    );
+
     axum::serve(listener, app)
         .await
         .expect("Failed to start server");

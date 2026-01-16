@@ -67,13 +67,18 @@ impl ChessGame {
         }
 
         // Basic validation
-        if chess_move.from_row >= BOARD_SIZE || chess_move.from_col >= BOARD_SIZE 
-            || chess_move.to_row >= BOARD_SIZE || chess_move.to_col >= BOARD_SIZE {
+        if chess_move.from_row >= BOARD_SIZE
+            || chess_move.from_col >= BOARD_SIZE
+            || chess_move.to_row >= BOARD_SIZE
+            || chess_move.to_col >= BOARD_SIZE
+        {
             return Err("Invalid move: coordinates out of bounds".to_string());
         }
 
         // Check if there's a piece at the source position
-        let piece = self.board.get(chess_move.from_row, chess_move.from_col)
+        let piece = self
+            .board
+            .get(chess_move.from_row, chess_move.from_col)
             .ok_or_else(|| "No piece at source position".to_string())?;
 
         // Check if it's the correct player's turn
@@ -150,18 +155,32 @@ impl ChessGame {
                 const WHITE_START_ROW: i32 = 1;
                 const BLACK_START_ROW: i32 = 6;
 
-                let direction = if piece.color == Color::White { WHITE_DIRECTION } else { BLACK_DIRECTION };
-                let start_row = if piece.color == Color::White { WHITE_START_ROW } else { BLACK_START_ROW };
+                let direction = if piece.color == Color::White {
+                    WHITE_DIRECTION
+                } else {
+                    BLACK_DIRECTION
+                };
+                let start_row = if piece.color == Color::White {
+                    WHITE_START_ROW
+                } else {
+                    BLACK_START_ROW
+                };
 
                 // Forward move
                 if from_col == to_col {
                     if to_row == from_row + direction {
                         // Single step forward
-                        return self.board.get(chess_move.to_row, chess_move.to_col).is_none();
+                        return self
+                            .board
+                            .get(chess_move.to_row, chess_move.to_col)
+                            .is_none();
                     } else if from_row == start_row && to_row == from_row + (2 * direction) {
                         // Double step from start
                         let middle_row = (from_row + direction) as usize;
-                        return self.board.get(chess_move.to_row, chess_move.to_col).is_none()
+                        return self
+                            .board
+                            .get(chess_move.to_row, chess_move.to_col)
+                            .is_none()
                             && self.board.get(middle_row, chess_move.from_col).is_none();
                     }
                 }
@@ -180,16 +199,16 @@ impl ChessGame {
                 row_diff == col_diff && row_diff > 0 && self.is_path_clear(chess_move)
             }
             PieceType::Rook => {
-                (row_diff == 0 || col_diff == 0) && (row_diff + col_diff > 0) && self.is_path_clear(chess_move)
+                (row_diff == 0 || col_diff == 0)
+                    && (row_diff + col_diff > 0)
+                    && self.is_path_clear(chess_move)
             }
             PieceType::Queen => {
                 ((row_diff == col_diff) || (row_diff == 0 || col_diff == 0))
                     && (row_diff + col_diff > 0)
                     && self.is_path_clear(chess_move)
             }
-            PieceType::King => {
-                row_diff <= 1 && col_diff <= 1 && (row_diff + col_diff > 0)
-            }
+            PieceType::King => row_diff <= 1 && col_diff <= 1 && (row_diff + col_diff > 0),
         }
     }
 
@@ -206,7 +225,11 @@ impl ChessGame {
         let mut current_col = from_col + col_step;
 
         while current_row != to_row || current_col != to_col {
-            if self.board.get(current_row as usize, current_col as usize).is_some() {
+            if self
+                .board
+                .get(current_row as usize, current_col as usize)
+                .is_some()
+            {
                 return false;
             }
             current_row += row_step;
@@ -292,7 +315,7 @@ impl ChessGame {
                                     to_row,
                                     to_col,
                                 };
-                                
+
                                 // Check if this is a valid move
                                 if self.is_valid_move(&test_move, &piece) {
                                     // Check destination doesn't have friendly piece
@@ -301,7 +324,7 @@ impl ChessGame {
                                             continue;
                                         }
                                     }
-                                    
+
                                     // Check if move would leave king in check
                                     if !self.would_move_leave_king_in_check(&test_move, color) {
                                         return true;
@@ -515,31 +538,34 @@ mod tests {
     #[test]
     fn test_capture_updates_score() {
         let mut game = ChessGame::new();
-        
+
         // Move white pawn forward (e2 to e4)
         game.make_move(Move {
             from_row: 1,
             from_col: 4,
             to_row: 3,
             to_col: 4,
-        }).unwrap();
-        
+        })
+        .unwrap();
+
         // Move black pawn forward (d7 to d5)
         game.make_move(Move {
             from_row: 6,
             from_col: 3,
             to_row: 4,
             to_col: 3,
-        }).unwrap();
-        
+        })
+        .unwrap();
+
         // White captures black pawn (e4 to d5)
         game.make_move(Move {
             from_row: 3,
             from_col: 4,
             to_row: 4,
             to_col: 3,
-        }).unwrap();
-        
+        })
+        .unwrap();
+
         // Verify white captured a pawn
         assert_eq!(game.white_score, 1);
         assert_eq!(game.black_score, 0);
@@ -550,47 +576,52 @@ mod tests {
     #[test]
     fn test_multiple_captures_accumulate_score() {
         let mut game = ChessGame::new();
-        
+
         // White pawn e2 to e4
         game.make_move(Move {
             from_row: 1,
             from_col: 4,
             to_row: 3,
             to_col: 4,
-        }).unwrap();
-        
+        })
+        .unwrap();
+
         // Black pawn d7 to d5
         game.make_move(Move {
             from_row: 6,
             from_col: 3,
             to_row: 4,
             to_col: 3,
-        }).unwrap();
-        
+        })
+        .unwrap();
+
         // White captures black pawn (e4 to d5) - score +1
         game.make_move(Move {
             from_row: 3,
             from_col: 4,
             to_row: 4,
             to_col: 3,
-        }).unwrap();
-        
+        })
+        .unwrap();
+
         // Black pawn e7 to e6
         game.make_move(Move {
             from_row: 6,
             from_col: 4,
             to_row: 5,
             to_col: 4,
-        }).unwrap();
-        
+        })
+        .unwrap();
+
         // White pawn d5 to e6 - captures black pawn, score +1 more
         game.make_move(Move {
             from_row: 4,
             from_col: 3,
             to_row: 5,
             to_col: 4,
-        }).unwrap();
-        
+        })
+        .unwrap();
+
         // Verify accumulated score
         assert_eq!(game.white_score, 2); // 1 (pawn) + 1 (pawn)
         assert_eq!(game.captured_by_white.len(), 2);
@@ -601,13 +632,16 @@ mod tests {
         // Set up a position where white king is in check
         let mut game = ChessGame::new();
         game.board = Board::empty();
-        
+
         // White king at e1 (0, 4)
-        game.board.set(0, 4, Some(Piece::new(PieceType::King, Color::White)));
+        game.board
+            .set(0, 4, Some(Piece::new(PieceType::King, Color::White)));
         // Black rook at e8 (7, 4) - attacking the white king
-        game.board.set(7, 4, Some(Piece::new(PieceType::Rook, Color::Black)));
+        game.board
+            .set(7, 4, Some(Piece::new(PieceType::Rook, Color::Black)));
         // Black king at a8 (7, 0)
-        game.board.set(7, 0, Some(Piece::new(PieceType::King, Color::Black)));
+        game.board
+            .set(7, 0, Some(Piece::new(PieceType::King, Color::Black)));
 
         assert!(game.is_king_in_check(Color::White));
         assert!(!game.is_king_in_check(Color::Black));
@@ -618,15 +652,19 @@ mod tests {
         // Set up a position where moving would put own king in check
         let mut game = ChessGame::new();
         game.board = Board::empty();
-        
+
         // White king at e1 (0, 4)
-        game.board.set(0, 4, Some(Piece::new(PieceType::King, Color::White)));
+        game.board
+            .set(0, 4, Some(Piece::new(PieceType::King, Color::White)));
         // White bishop at d2 (1, 3) blocking a diagonal check
-        game.board.set(1, 3, Some(Piece::new(PieceType::Bishop, Color::White)));
+        game.board
+            .set(1, 3, Some(Piece::new(PieceType::Bishop, Color::White)));
         // Black bishop at a5 (4, 0) can attack king diagonally through d2
-        game.board.set(4, 0, Some(Piece::new(PieceType::Bishop, Color::Black)));
+        game.board
+            .set(4, 0, Some(Piece::new(PieceType::Bishop, Color::Black)));
         // Black king at a8 (7, 0)
-        game.board.set(7, 0, Some(Piece::new(PieceType::King, Color::Black)));
+        game.board
+            .set(7, 0, Some(Piece::new(PieceType::King, Color::Black)));
 
         game.current_turn = Color::White;
 
@@ -647,17 +685,20 @@ mod tests {
         // Set up a back rank checkmate position
         let mut game = ChessGame::new();
         game.board = Board::empty();
-        
+
         // Simpler checkmate: white king in corner with no escape
         // White king at a1 (0, 0)
-        game.board.set(0, 0, Some(Piece::new(PieceType::King, Color::White)));
+        game.board
+            .set(0, 0, Some(Piece::new(PieceType::King, Color::White)));
         // Black queen at b2 (1, 1) will deliver checkmate (protected by king)
-        game.board.set(7, 1, Some(Piece::new(PieceType::Queen, Color::Black)));
+        game.board
+            .set(7, 1, Some(Piece::new(PieceType::Queen, Color::Black)));
         // Black king at c3 (2, 2) protects the queen
-        game.board.set(2, 2, Some(Piece::new(PieceType::King, Color::Black)));
+        game.board
+            .set(2, 2, Some(Piece::new(PieceType::King, Color::Black)));
 
         game.current_turn = Color::Black;
-        
+
         // Move black queen to deliver checkmate at b2
         let chess_move = Move {
             from_row: 7,
@@ -674,16 +715,19 @@ mod tests {
         // Set up a stalemate position
         let mut game = ChessGame::new();
         game.board = Board::empty();
-        
+
         // White king at a1 (0, 0)
-        game.board.set(0, 0, Some(Piece::new(PieceType::King, Color::White)));
+        game.board
+            .set(0, 0, Some(Piece::new(PieceType::King, Color::White)));
         // Black king at c2 (1, 2) - controls b1 and b2
-        game.board.set(1, 2, Some(Piece::new(PieceType::King, Color::Black)));
+        game.board
+            .set(1, 2, Some(Piece::new(PieceType::King, Color::Black)));
         // Black rook at b8 (7, 1) will move to deliver stalemate
-        game.board.set(7, 1, Some(Piece::new(PieceType::Rook, Color::Black)));
+        game.board
+            .set(7, 1, Some(Piece::new(PieceType::Rook, Color::Black)));
 
         game.current_turn = Color::Black;
-        
+
         // Move black rook to b2 to create stalemate
         // After this move, white king at a1 cannot move:
         // - a2 is controlled by black king at c2
@@ -708,16 +752,19 @@ mod tests {
         // Test that status is updated to Check when a checking move is made
         let mut game = ChessGame::new();
         game.board = Board::empty();
-        
+
         // White king at e1 (0, 4)
-        game.board.set(0, 4, Some(Piece::new(PieceType::King, Color::White)));
+        game.board
+            .set(0, 4, Some(Piece::new(PieceType::King, Color::White)));
         // Black rook at a8 (7, 0)
-        game.board.set(7, 0, Some(Piece::new(PieceType::Rook, Color::Black)));
+        game.board
+            .set(7, 0, Some(Piece::new(PieceType::Rook, Color::Black)));
         // Black king at h8 (7, 7)
-        game.board.set(7, 7, Some(Piece::new(PieceType::King, Color::Black)));
+        game.board
+            .set(7, 7, Some(Piece::new(PieceType::King, Color::Black)));
 
         game.current_turn = Color::Black;
-        
+
         // Move black rook to check white king
         let chess_move = Move {
             from_row: 7,
@@ -733,7 +780,7 @@ mod tests {
     fn test_cannot_move_when_game_is_over() {
         let mut game = ChessGame::new();
         game.status = GameStatus::Checkmate;
-        
+
         let chess_move = Move {
             from_row: 1,
             from_col: 4,
@@ -750,17 +797,20 @@ mod tests {
         // Test that a king in check can move out of check
         let mut game = ChessGame::new();
         game.board = Board::empty();
-        
+
         // White king at e1 (0, 4) - in check from rook
-        game.board.set(0, 4, Some(Piece::new(PieceType::King, Color::White)));
+        game.board
+            .set(0, 4, Some(Piece::new(PieceType::King, Color::White)));
         // Black rook at e8 (7, 4) - giving check
-        game.board.set(7, 4, Some(Piece::new(PieceType::Rook, Color::Black)));
+        game.board
+            .set(7, 4, Some(Piece::new(PieceType::Rook, Color::Black)));
         // Black king at a8 (7, 0)
-        game.board.set(7, 0, Some(Piece::new(PieceType::King, Color::Black)));
+        game.board
+            .set(7, 0, Some(Piece::new(PieceType::King, Color::Black)));
 
         game.current_turn = Color::White;
         game.status = GameStatus::Check;
-        
+
         // King moves to d1 to escape check
         let chess_move = Move {
             from_row: 0,

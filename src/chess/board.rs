@@ -65,8 +65,18 @@ impl Board {
         }
     }
 
-    pub fn move_piece(&mut self, from_row: usize, from_col: usize, to_row: usize, to_col: usize) -> bool {
-        if from_row >= BOARD_SIZE || from_col >= BOARD_SIZE || to_row >= BOARD_SIZE || to_col >= BOARD_SIZE {
+    pub fn move_piece(
+        &mut self,
+        from_row: usize,
+        from_col: usize,
+        to_row: usize,
+        to_col: usize,
+    ) -> bool {
+        if from_row >= BOARD_SIZE
+            || from_col >= BOARD_SIZE
+            || to_row >= BOARD_SIZE
+            || to_col >= BOARD_SIZE
+        {
             return false;
         }
 

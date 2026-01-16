@@ -130,10 +130,7 @@ async fn join_game(
                 color: color_str.to_string(),
             }))
         }
-        Err(err) => Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: err }),
-        )),
+        Err(err) => Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: err }))),
     }
 }
 
@@ -165,7 +162,8 @@ async fn make_move(
     }
 
     // Verify it's the player's turn
-    let player_color = session.get_player_color(&request.player_id)
+    let player_color = session
+        .get_player_color(&request.player_id)
         .expect("Player color should exist after verifying player is in game");
     if player_color != session.game.current_turn {
         return Err((
@@ -182,44 +180,8 @@ async fn make_move(
             game_state.update_game(&game_id, session.clone()).await;
             Ok(Json(session))
         }
-        Err(err) => Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: err }),
-        )),
+        Err(err) => Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: err }))),
     }
-}
-
-async fn get_valid_moves(
-    State(game_state): State<GameState>,
-    Path(game_id): Path<String>,
-    Json(request): Json<ValidMovesRequest>,
-) -> Result<Json<ValidMovesResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let session = match game_state.get_game(&game_id).await {
-        Some(s) => s,
-        None => {
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(ErrorResponse {
-                    error: "Game not found".to_string(),
-                }),
-            ))
-        }
-    };
-
-    // Verify player is in the game
-    if !session.is_player_in_game(&request.player_id) {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse {
-                error: "Player not in this game".to_string(),
-            }),
-        ));
-    }
-
-    // Get valid moves for the piece at the specified position
-    let valid_moves = session.game.get_valid_moves(request.row, request.col);
-    
-    Ok(Json(ValidMovesResponse { valid_moves }))
 }
 
 /// Helper function to get game session and verify player
@@ -317,4 +279,37 @@ async fn accept_draw(
             Json(ErrorResponse { error: err }),
         )),
     }
+}
+
+async fn get_valid_moves(
+    State(game_state): State<GameState>,
+    Path(game_id): Path<String>,
+    Json(request): Json<ValidMovesRequest>,
+) -> Result<Json<ValidMovesResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let session = match game_state.get_game(&game_id).await {
+        Some(s) => s,
+        None => {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    error: "Game not found".to_string(),
+                }),
+            ))
+        }
+    };
+
+    // Verify player is in the game
+    if !session.is_player_in_game(&request.player_id) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse {
+                error: "Player not in this game".to_string(),
+            }),
+        ));
+    }
+
+    // Get valid moves for the piece at the specified position
+    let valid_moves = session.game.get_valid_moves(request.row, request.col);
+    
+    Ok(Json(ValidMovesResponse { valid_moves }))
 }
