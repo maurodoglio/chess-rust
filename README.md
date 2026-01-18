@@ -4,6 +4,11 @@ A multiplayer web chess game backend implementation built in Rust. This server p
 
 ## Features
 
+- **User Account Management**: Complete user registration, authentication, and profile management
+  - User registration with username, email, and password
+  - Secure password hashing using bcrypt
+  - JWT-based authentication
+  - User profile retrieval
 - **Complete Chess Game Logic**: Full implementation of chess rules including piece movement validation
 - **Check, Checkmate, and Stalemate Detection**: Automatically detects check, checkmate, and stalemate conditions
 - **Move Validation**: Prevents illegal moves that would leave the king in check
@@ -16,7 +21,81 @@ A multiplayer web chess game backend implementation built in Rust. This server p
 
 ## API Endpoints
 
-### Health Check
+### User Account Management
+
+#### Register a New User
+```
+POST /users/register
+Content-Type: application/json
+
+{
+  "username": "your-username",
+  "email": "your-email@example.com",
+  "password": "your-secure-password"
+}
+```
+Returns:
+```json
+{
+  "token": "jwt-token-here",
+  "user": {
+    "id": "user-uuid",
+    "username": "your-username",
+    "created_at": "2026-01-18T08:39:24Z",
+    "games_played": 0,
+    "games_won": 0
+  }
+}
+```
+
+**Validation**:
+- Username must be at least 3 characters long
+- Email must be a valid email address
+- Password must be at least 6 characters long
+- Username and email must be unique
+
+#### Login
+```
+POST /users/login
+Content-Type: application/json
+
+{
+  "username": "your-username",
+  "password": "your-password"
+}
+```
+Returns:
+```json
+{
+  "token": "jwt-token-here",
+  "user": {
+    "id": "user-uuid",
+    "username": "your-username",
+    "created_at": "2026-01-18T08:39:24Z",
+    "games_played": 0,
+    "games_won": 0
+  }
+}
+```
+
+#### Get User Profile
+```
+GET /users/:user_id
+```
+Returns:
+```json
+{
+  "id": "user-uuid",
+  "username": "username",
+  "created_at": "2026-01-18T08:39:24Z",
+  "games_played": 0,
+  "games_won": 0
+}
+```
+
+### Game Management
+
+#### Health Check
 ```
 GET /health
 ```
@@ -269,9 +348,52 @@ The project is organized into several modules:
 - **game**: Multiplayer session management
   - `session.rs`: Game session and player management
   - `state.rs`: Shared state for multiple games
+- **user**: User account management
+  - `account.rs`: User data structures
+  - `auth.rs`: Authentication and JWT token handling
+  - `state.rs`: User state management
 - **api**: REST API handlers
 
 ## Example Usage
+
+### User Account Management
+
+```bash
+# Register a new user
+curl -X POST http://localhost:3000/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "player1",
+    "email": "player1@example.com",
+    "password": "securepassword123"
+  }'
+
+# Response includes JWT token
+# {
+#   "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+#   "user": {
+#     "id": "uuid-here",
+#     "username": "player1",
+#     "created_at": "2026-01-18T08:39:24Z",
+#     "games_played": 0,
+#     "games_won": 0
+#   }
+# }
+
+# Login to get a new token
+curl -X POST http://localhost:3000/users/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "player1",
+    "password": "securepassword123"
+  }'
+
+# Get user profile
+USER_ID="uuid-from-registration"
+curl http://localhost:3000/users/$USER_ID
+```
+
+### Playing Chess
 
 ```bash
 # Create a new game
@@ -310,11 +432,21 @@ Potential improvements for this backend:
 
 - WebSocket support for real-time move updates
 - Game persistence (database integration)
-- Authentication and user accounts
+## Future Enhancements
+
+Potential improvements for this backend:
+
+- WebSocket support for real-time move updates
+- Game persistence (database integration)
+- ~~Authentication and user accounts~~ ✅ **Implemented!**
+- Token-based game access and protected endpoints
 - Move history and game replay
 - En passant and castling support
 - Game timers and time controls
 - Game ratings and statistics
+- User statistics integration with game outcomes
+- Password reset functionality
+- Email verification
 
 ## License
 

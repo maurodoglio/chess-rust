@@ -1,0 +1,96 @@
+warning: unused import: `board::Board`
+ --> src/chess/mod.rs:5:9
+  |
+5 | pub use board::Board;
+  |         ^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `GameStatus`
+ --> src/chess/mod.rs:6:27
+  |
+6 | pub use game::{ChessGame, GameStatus, Move};
+  |                           ^^^^^^^^^^
+
+warning: unused imports: `PieceType` and `Piece`
+ --> src/chess/mod.rs:7:24
+  |
+7 | pub use piece::{Color, Piece, PieceType};
+  |                        ^^^^^  ^^^^^^^^^
+
+warning: unused import: `Player`
+ --> src/game/mod.rs:4:32
+  |
+4 | pub use session::{GameSession, Player};
+  |                                ^^^^^^
+
+warning: unused import: `User`
+ --> src/user/mod.rs:5:76
+  |
+5 | pub use account::{AuthResponse, LoginRequest, PublicUser, RegisterRequest, User};
+  |                                                                            ^^^^
+
+warning: unused variable: `color`
+   --> src/chess/game.rs:362:30
+    |
+362 |     pub fn resign(&mut self, color: Color) -> Result<(), String> {
+    |                              ^^^^^ help: if this is intentional, prefix it with an underscore: `_color`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated items `empty`, `set`, and `is_valid_position` are never used
+  --> src/chess/board.rs:20:12
+   |
+11 | impl Board {
+   | ---------- associated items in this implementation
+...
+20 |     pub fn empty() -> Self {
+   |            ^^^^^
+...
+62 |     pub fn set(&mut self, row: usize, col: usize, piece: Option<Piece>) {
+   |            ^^^
+...
+92 |     pub fn is_valid_position(row: i32, col: i32) -> bool {
+   |            ^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `verify_token` is never used
+  --> src/user/auth.rs:38:8
+   |
+38 | pub fn verify_token(token: &str) -> Result<Claims, String> {
+   |        ^^^^^^^^^^^^
+
+warning: method `update_user_stats` is never used
+   --> src/user/state.rs:115:18
+    |
+ 14 | impl UserState {
+    | -------------- method in this implementation
+...
+115 |     pub async fn update_user_stats(&self, user_id: &str, won: bool) -> Result<(), String> {
+    |                  ^^^^^^^^^^^^^^^^^
+
+warning: `chess-rust` (bin "chess-rust") generated 9 warnings (run `cargo fix --bin "chess-rust" -p chess-rust` to apply 6 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.07s
+     Running `target/debug/chess-rust`
+[2m2026-01-18T08:39:00.597160Z[0m [32m INFO[0m [2mchess_rust[0m[2m:[0m Chess server listening on 0.0.0.0:3001
+[2m2026-01-18T08:39:15.480984Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/health [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_request[0m[2m:[0m started processing request
+[2m2026-01-18T08:39:15.481093Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/health [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_response[0m[2m:[0m finished processing request [3mlatency[0m[2m=[0m0 ms [3mstatus[0m[2m=[0m200
+[2m2026-01-18T08:39:23.470752Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/users/register [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_request[0m[2m:[0m started processing request
+[2m2026-01-18T08:39:24.358162Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/users/register [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_response[0m[2m:[0m finished processing request [3mlatency[0m[2m=[0m887 ms [3mstatus[0m[2m=[0m200
+[2m2026-01-18T08:39:30.854034Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/users/register [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_request[0m[2m:[0m started processing request
+[2m2026-01-18T08:39:31.740222Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/users/register [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_response[0m[2m:[0m finished processing request [3mlatency[0m[2m=[0m886 ms [3mstatus[0m[2m=[0m200
+[2m2026-01-18T08:39:37.825805Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/users/login [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_request[0m[2m:[0m started processing request
+[2m2026-01-18T08:39:38.712298Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/users/login [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_response[0m[2m:[0m finished processing request [3mlatency[0m[2m=[0m886 ms [3mstatus[0m[2m=[0m200
+[2m2026-01-18T08:39:45.097139Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/users/login [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_request[0m[2m:[0m started processing request
+[2m2026-01-18T08:39:45.990309Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/users/login [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_response[0m[2m:[0m finished processing request [3mlatency[0m[2m=[0m893 ms [3mstatus[0m[2m=[0m401
+[2m2026-01-18T08:39:51.971548Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/users/6b6c1a54-cb18-472d-8763-8f03ae82ffbe [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_request[0m[2m:[0m started processing request
+[2m2026-01-18T08:39:51.971694Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/users/6b6c1a54-cb18-472d-8763-8f03ae82ffbe [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_response[0m[2m:[0m finished processing request [3mlatency[0m[2m=[0m0 ms [3mstatus[0m[2m=[0m200
+[2m2026-01-18T08:39:58.120686Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/users/register [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_request[0m[2m:[0m started processing request
+[2m2026-01-18T08:39:58.120852Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/users/register [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_response[0m[2m:[0m finished processing request [3mlatency[0m[2m=[0m0 ms [3mstatus[0m[2m=[0m400
+[2m2026-01-18T08:40:04.192469Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/users/register [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_request[0m[2m:[0m started processing request
+[2m2026-01-18T08:40:04.192626Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/users/register [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_response[0m[2m:[0m finished processing request [3mlatency[0m[2m=[0m0 ms [3mstatus[0m[2m=[0m400
+[2m2026-01-18T08:40:11.466362Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/games [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_request[0m[2m:[0m started processing request
+[2m2026-01-18T08:40:11.466502Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mPOST [3muri[0m[2m=[0m/games [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_response[0m[2m:[0m finished processing request [3mlatency[0m[2m=[0m0 ms [3mstatus[0m[2m=[0m200
+[2m2026-01-18T08:40:11.473419Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/games/b79d43bf-81d4-40b8-a16e-17835f1e5057 [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_request[0m[2m:[0m started processing request
+[2m2026-01-18T08:40:11.473621Z[0m [34mDEBUG[0m [1mrequest[0m[1m{[0m[3mmethod[0m[2m=[0mGET [3muri[0m[2m=[0m/games/b79d43bf-81d4-40b8-a16e-17835f1e5057 [3mversion[0m[2m=[0mHTTP/1.1[1m}[0m[2m:[0m [2mtower_http::trace::on_response[0m[2m:[0m finished processing request [3mlatency[0m[2m=[0m0 ms [3mstatus[0m[2m=[0m200
