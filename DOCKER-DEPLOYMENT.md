@@ -240,6 +240,9 @@ docker compose restart
 
 - [DOCKER.md](DOCKER.md) - Comprehensive Docker deployment guide
 - [DOCKER-QUICKREF.md](DOCKER-QUICKREF.md) - Quick command reference
+- [AZURE-DEPLOYMENT.md](AZURE-DEPLOYMENT.md) - Azure deployment guide
+- [AZURE-QUICKREF.md](AZURE-QUICKREF.md) - Azure quick reference
+- [RENDER-DEPLOYMENT.md](RENDER-DEPLOYMENT.md) - Render deployment guide
 - [README.md](README.md) - Project overview and API documentation
 - [DEPLOYMENT.md](DEPLOYMENT.md) - General deployment information
 
