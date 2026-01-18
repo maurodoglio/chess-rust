@@ -2,7 +2,7 @@ use crate::chess::{ChessGame, Color};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Player {
     pub id: String,
     pub color: Color,

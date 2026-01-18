@@ -20,8 +20,8 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    // Create shared game state
-    let game_state = GameState::new();
+    // Create shared game state and load persisted games
+    let game_state = GameState::load_from_disk();
 
     // Create user store
     let user_store = UserStore::new();
