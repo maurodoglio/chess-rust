@@ -61,13 +61,13 @@ class ChessApp {
 
     loadGameSession() {
         const gameId = localStorage.getItem('chess_game_id');
-        const playerColor = localStorage.getItem('chess_player_color');
+        const playerColorStr = localStorage.getItem('chess_player_color');
         const isSpectator = localStorage.getItem('chess_is_spectator') === 'true';
         
         if (gameId && this.isAuthenticated()) {
             this.gameId = gameId;
-            // Convert empty string back to null for playerColor
-            this.playerColor = playerColor || null;
+            // Convert string 'null' or empty string to actual null
+            this.playerColor = (playerColorStr && playerColorStr !== 'null') ? playerColorStr : null;
             this.isSpectator = isSpectator;
             return true;
         }
@@ -79,7 +79,8 @@ class ChessApp {
         this.playerColor = playerColor;
         this.isSpectator = isSpectator;
         localStorage.setItem('chess_game_id', gameId);
-        localStorage.setItem('chess_player_color', playerColor || '');
+        // Store null as the string 'null' for consistency
+        localStorage.setItem('chess_player_color', playerColor === null ? 'null' : playerColor);
         localStorage.setItem('chess_is_spectator', isSpectator.toString());
     }
 
