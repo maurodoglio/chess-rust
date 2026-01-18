@@ -3,6 +3,8 @@ use super::piece::{Color, Piece, PieceType};
 use serde::{Deserialize, Serialize};
 
 const BOARD_SIZE: usize = 8;
+const CASTLING_DISTANCE: i32 = 2;
+const PAWN_DOUBLE_MOVE_DISTANCE: i32 = 2;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Move {
@@ -118,7 +120,7 @@ impl ChessGame {
 
         // Check if this is a castling move
         let is_castling = piece.piece_type == PieceType::King
-            && (chess_move.to_col as i32 - chess_move.from_col as i32).abs() == 2;
+            && (chess_move.to_col as i32 - chess_move.from_col as i32).abs() == CASTLING_DISTANCE;
 
         // Check if the move would leave the king in check
         if !is_castling && self.would_move_leave_king_in_check(&chess_move, piece.color) {
@@ -175,7 +177,8 @@ impl ChessGame {
         // Update en-passant target square
         self.en_passant_target = None;
         if piece.piece_type == PieceType::Pawn
-            && (chess_move.to_row as i32 - chess_move.from_row as i32).abs() == 2
+            && (chess_move.to_row as i32 - chess_move.from_row as i32).abs()
+                == PAWN_DOUBLE_MOVE_DISTANCE
         {
             // A pawn moved two squares, set en-passant target
             let target_row = (chess_move.from_row + chess_move.to_row) / 2;
@@ -274,7 +277,7 @@ impl ChessGame {
                     return true;
                 }
                 // Castling (king moves two squares horizontally)
-                if row_diff == 0 && col_diff == 2 {
+                if row_diff == 0 && col_diff == CASTLING_DISTANCE {
                     return self.can_castle(chess_move, piece.color);
                 }
                 false
@@ -492,16 +495,18 @@ impl ChessGame {
             }
             PieceType::Rook => {
                 // Check which rook moved based on starting position
-                if piece.color == Color::White {
-                    if chess_move.from_row == 0 && chess_move.from_col == 0 {
+                if piece.color == Color::White && chess_move.from_row == 0 {
+                    if chess_move.from_col == 0 {
                         self.white_rook_queenside_moved = true;
-                    } else if chess_move.from_row == 0 && chess_move.from_col == 7 {
+                    } else if chess_move.from_col == 7 {
                         self.white_rook_kingside_moved = true;
                     }
-                } else if chess_move.from_row == 7 && chess_move.from_col == 0 {
-                    self.black_rook_queenside_moved = true;
-                } else if chess_move.from_row == 7 && chess_move.from_col == 7 {
-                    self.black_rook_kingside_moved = true;
+                } else if piece.color == Color::Black && chess_move.from_row == 7 {
+                    if chess_move.from_col == 0 {
+                        self.black_rook_queenside_moved = true;
+                    } else if chess_move.from_col == 7 {
+                        self.black_rook_kingside_moved = true;
+                    }
                 }
             }
             _ => {}
