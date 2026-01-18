@@ -410,27 +410,173 @@ class ChessApp {
             const piece = this.gameState.game.board.squares[row][col];
             if (piece && piece.color.toLowerCase() === this.playerColor.toLowerCase()) {
                 this.selectedSquare = { row, col };
-                this.highlightSquare(row, col, true);
+                this.highlightSquareAndMoves(row, col);
                 this.showStatus('Select destination square', 'info');
             }
         } else {
-            // If a square is already selected, try to make a move
-            this.makeMove(this.selectedSquare.row, this.selectedSquare.col, row, col);
+            // If clicking the same square, deselect it
+            if (this.selectedSquare.row === row && this.selectedSquare.col === col) {
+                this.selectedSquare = null;
+                this.clearHighlights();
+                this.showStatus('Piece deselected', 'info');
+            } else {
+                // If a square is already selected, try to make a move
+                this.makeMove(this.selectedSquare.row, this.selectedSquare.col, row, col);
+            }
         }
     }
 
-    highlightSquare(row, col, selected) {
-        // Clear previous highlights
+    clearHighlights() {
         document.querySelectorAll('.square').forEach(sq => {
             sq.classList.remove('selected', 'valid-move');
         });
+    }
+
+    highlightSquareAndMoves(row, col) {
+        // Clear previous highlights
+        this.clearHighlights();
         
-        if (selected) {
-            const square = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-            if (square) {
-                square.classList.add('selected');
-            }
+        // Highlight the selected square
+        const selectedSquare = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+        if (selectedSquare) {
+            selectedSquare.classList.add('selected');
         }
+        
+        // Calculate and highlight valid moves
+        const validMoves = this.calculateValidMoves(row, col);
+        validMoves.forEach(move => {
+            const square = document.querySelector(`[data-row="${move.row}"][data-col="${move.col}"]`);
+            if (square) {
+                square.classList.add('valid-move');
+            }
+        });
+    }
+
+    calculateValidMoves(fromRow, fromCol) {
+        const validMoves = [];
+        const piece = this.gameState.game.board.squares[fromRow][fromCol];
+        
+        if (!piece) return validMoves;
+        
+        const pieceType = piece.piece_type;
+        const color = piece.color;
+        
+        // Helper function to check if a square is on the board
+        const isValidSquare = (row, col) => row >= 0 && row < 8 && col >= 0 && col < 8;
+        
+        // Helper function to check if a square is empty or has an opponent piece
+        const canMoveTo = (row, col) => {
+            if (!isValidSquare(row, col)) return false;
+            const targetPiece = this.gameState.game.board.squares[row][col];
+            return !targetPiece || targetPiece.color !== color;
+        };
+        
+        // Helper function to add moves in a direction (for sliding pieces)
+        const addSlidingMoves = (rowDir, colDir) => {
+            let row = fromRow + rowDir;
+            let col = fromCol + colDir;
+            while (isValidSquare(row, col)) {
+                const targetPiece = this.gameState.game.board.squares[row][col];
+                if (!targetPiece) {
+                    validMoves.push({ row, col });
+                } else {
+                    if (targetPiece.color !== color) {
+                        validMoves.push({ row, col });
+                    }
+                    break;
+                }
+                row += rowDir;
+                col += colDir;
+            }
+        };
+        
+        // Calculate moves based on piece type
+        switch (pieceType) {
+            case 'Pawn':
+                const direction = color === 'White' ? 1 : -1;
+                const startRow = color === 'White' ? 1 : 6;
+                
+                // Forward move
+                if (isValidSquare(fromRow + direction, fromCol) && 
+                    !this.gameState.game.board.squares[fromRow + direction][fromCol]) {
+                    validMoves.push({ row: fromRow + direction, col: fromCol });
+                    
+                    // Double move from start
+                    if (fromRow === startRow && 
+                        !this.gameState.game.board.squares[fromRow + 2 * direction][fromCol]) {
+                        validMoves.push({ row: fromRow + 2 * direction, col: fromCol });
+                    }
+                }
+                
+                // Diagonal captures
+                [-1, 1].forEach(colOffset => {
+                    const targetRow = fromRow + direction;
+                    const targetCol = fromCol + colOffset;
+                    if (isValidSquare(targetRow, targetCol)) {
+                        const targetPiece = this.gameState.game.board.squares[targetRow][targetCol];
+                        if (targetPiece && targetPiece.color !== color) {
+                            validMoves.push({ row: targetRow, col: targetCol });
+                        }
+                    }
+                });
+                break;
+                
+            case 'Knight':
+                const knightMoves = [
+                    [-2, -1], [-2, 1], [-1, -2], [-1, 2],
+                    [1, -2], [1, 2], [2, -1], [2, 1]
+                ];
+                knightMoves.forEach(([rowOffset, colOffset]) => {
+                    const targetRow = fromRow + rowOffset;
+                    const targetCol = fromCol + colOffset;
+                    if (canMoveTo(targetRow, targetCol)) {
+                        validMoves.push({ row: targetRow, col: targetCol });
+                    }
+                });
+                break;
+                
+            case 'Bishop':
+                addSlidingMoves(1, 1);
+                addSlidingMoves(1, -1);
+                addSlidingMoves(-1, 1);
+                addSlidingMoves(-1, -1);
+                break;
+                
+            case 'Rook':
+                addSlidingMoves(1, 0);
+                addSlidingMoves(-1, 0);
+                addSlidingMoves(0, 1);
+                addSlidingMoves(0, -1);
+                break;
+                
+            case 'Queen':
+                addSlidingMoves(1, 1);
+                addSlidingMoves(1, -1);
+                addSlidingMoves(-1, 1);
+                addSlidingMoves(-1, -1);
+                addSlidingMoves(1, 0);
+                addSlidingMoves(-1, 0);
+                addSlidingMoves(0, 1);
+                addSlidingMoves(0, -1);
+                break;
+                
+            case 'King':
+                const kingMoves = [
+                    [-1, -1], [-1, 0], [-1, 1],
+                    [0, -1], [0, 1],
+                    [1, -1], [1, 0], [1, 1]
+                ];
+                kingMoves.forEach(([rowOffset, colOffset]) => {
+                    const targetRow = fromRow + rowOffset;
+                    const targetCol = fromCol + colOffset;
+                    if (canMoveTo(targetRow, targetCol)) {
+                        validMoves.push({ row: targetRow, col: targetCol });
+                    }
+                });
+                break;
+        }
+        
+        return validMoves;
     }
 
     async makeMove(fromRow, fromCol, toRow, toCol) {
@@ -464,14 +610,14 @@ class ChessApp {
             this.updateGameInfo();
             
             this.selectedSquare = null;
-            this.highlightSquare(null, null, false);
+            this.clearHighlights();
             
             this.turnBannerShown = false; // Reset turn banner flag after move
             this.showStatus('Move made successfully!', 'success');
         } catch (error) {
             this.showStatus('Error: ' + error.message, 'error');
             this.selectedSquare = null;
-            this.highlightSquare(null, null, false);
+            this.clearHighlights();
         }
     }
 
