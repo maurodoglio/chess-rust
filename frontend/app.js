@@ -13,9 +13,14 @@ class ChessApp {
         this.lastTurnColor = null;
         this.turnBannerShown = false;
         this.statusTimeout = null;
+        this.authToken = null;
+        this.username = null;
+        this.isLoginMode = true;
         
+        this.loadAuthState();
         this.initializeUI();
         this.attachEventListeners();
+        this.updateAuthUI();
     }
 
     generatePlayerId() {
@@ -26,6 +31,158 @@ class ChessApp {
             localStorage.setItem('chess_player_id', playerId);
         }
         return playerId;
+    }
+
+    loadAuthState() {
+        this.authToken = localStorage.getItem('chess_auth_token');
+        this.username = localStorage.getItem('chess_username');
+    }
+
+    saveAuthState(token, username) {
+        this.authToken = token;
+        this.username = username;
+        localStorage.setItem('chess_auth_token', token);
+        localStorage.setItem('chess_username', username);
+    }
+
+    clearAuthState() {
+        this.authToken = null;
+        this.username = null;
+        localStorage.removeItem('chess_auth_token');
+        localStorage.removeItem('chess_username');
+    }
+
+    isAuthenticated() {
+        return this.authToken !== null && this.username !== null;
+    }
+
+    getAuthHeaders() {
+        if (this.isAuthenticated()) {
+            return {
+                'Authorization': `Bearer ${this.authToken}`,
+                'Content-Type': 'application/json'
+            };
+        }
+        return {
+            'Content-Type': 'application/json'
+        };
+    }
+
+    updateAuthUI() {
+        const authStatus = document.getElementById('authStatus');
+        if (this.isAuthenticated()) {
+            authStatus.innerHTML = `
+                <span class="username">👤 ${this.username}</span>
+                <button id="logoutBtn">Logout</button>
+            `;
+            document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
+        } else {
+            authStatus.innerHTML = `
+                <button id="loginBtn">Login / Register</button>
+            `;
+            document.getElementById('loginBtn').addEventListener('click', () => this.showAuthModal());
+        }
+    }
+
+    showAuthModal() {
+        this.isLoginMode = true;
+        this.updateAuthModalUI();
+        document.getElementById('authModal').style.display = 'flex';
+        document.getElementById('authError').style.display = 'none';
+        document.getElementById('authUsername').value = '';
+        document.getElementById('authPassword').value = '';
+    }
+
+    updateAuthModalUI() {
+        const title = document.getElementById('authModalTitle');
+        const submitBtn = document.getElementById('authSubmitBtn');
+        const toggleBtn = document.getElementById('authToggleBtn');
+        
+        if (this.isLoginMode) {
+            title.textContent = 'Login';
+            submitBtn.textContent = 'Login';
+            toggleBtn.textContent = 'Register Instead';
+        } else {
+            title.textContent = 'Register';
+            submitBtn.textContent = 'Register';
+            toggleBtn.textContent = 'Login Instead';
+        }
+    }
+
+    async handleAuth() {
+        const username = document.getElementById('authUsername').value.trim();
+        const password = document.getElementById('authPassword').value;
+        const errorDiv = document.getElementById('authError');
+
+        // Validate input
+        if (username.length < 3) {
+            errorDiv.textContent = 'Username must be at least 3 characters long';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        if (password.length < 6) {
+            errorDiv.textContent = 'Password must be at least 6 characters long';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        const endpoint = this.isLoginMode ? '/auth/login' : '/auth/register';
+        
+        try {
+            const response = await fetch(`${this.apiUrl}${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                errorDiv.textContent = data.error || 'Authentication failed';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Save authentication state
+            this.saveAuthState(data.token, data.username);
+            
+            // Close modal and update UI
+            document.getElementById('authModal').style.display = 'none';
+            this.updateAuthUI();
+            
+            const action = this.isLoginMode ? 'logged in' : 'registered';
+            this.showStatus(`Successfully ${action} as ${data.username}!`, 'success');
+        } catch (error) {
+            errorDiv.textContent = 'Network error: ' + error.message;
+            errorDiv.style.display = 'block';
+        }
+    }
+
+    toggleAuthMode() {
+        this.isLoginMode = !this.isLoginMode;
+        this.updateAuthModalUI();
+        document.getElementById('authError').style.display = 'none';
+    }
+
+    logout() {
+        this.clearAuthState();
+        this.updateAuthUI();
+        this.showStatus('Logged out successfully', 'info');
+        
+        // Clear game state if any
+        if (this.gameId) {
+            this.gameId = null;
+            this.playerColor = null;
+            this.isSpectator = false;
+            document.getElementById('playerInfo').style.display = 'none';
+            if (this.pollInterval) {
+                clearInterval(this.pollInterval);
+                this.pollInterval = null;
+            }
+        }
     }
 
     initializeUI() {
@@ -69,6 +226,20 @@ class ChessApp {
         document.getElementById('watchGameSubmit').addEventListener('click', () => this.watchGameFromModal());
         document.getElementById('updateApiBtn').addEventListener('click', () => this.updateApiUrl());
         
+        // Auth modal listeners
+        document.getElementById('authSubmitBtn').addEventListener('click', () => this.handleAuth());
+        document.getElementById('authToggleBtn').addEventListener('click', () => this.toggleAuthMode());
+        
+        // Handle Enter key in auth form
+        const authInputs = [document.getElementById('authUsername'), document.getElementById('authPassword')];
+        authInputs.forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handleAuth();
+                }
+            });
+        });
+        
         // Modal close buttons
         document.querySelectorAll('.close').forEach(closeBtn => {
             closeBtn.addEventListener('click', (e) => {
@@ -92,13 +263,28 @@ class ChessApp {
     }
 
     async createNewGame() {
+        if (!this.isAuthenticated()) {
+            this.showStatus('Please login to create a game', 'error');
+            this.showAuthModal();
+            return;
+        }
+        
         try {
             this.showStatus('Creating new game...', 'info');
             const response = await fetch(`${this.apiUrl}/games`, {
-                method: 'POST'
+                method: 'POST',
+                headers: this.getAuthHeaders()
             });
             
-            if (!response.ok) throw new Error('Failed to create game');
+            if (!response.ok) {
+                if (response.status === 401) {
+                    this.showStatus('Session expired. Please login again.', 'error');
+                    this.clearAuthState();
+                    this.updateAuthUI();
+                    return;
+                }
+                throw new Error('Failed to create game');
+            }
             
             const data = await response.json();
             this.gameId = data.game_id;
@@ -132,11 +318,25 @@ class ChessApp {
     }
 
     async watchGame(gameId) {
+        if (!this.isAuthenticated()) {
+            this.showStatus('Please login to watch games', 'error');
+            this.showAuthModal();
+            return;
+        }
+        
         try {
             this.showStatus('Loading game as spectator...', 'info');
-            const response = await fetch(`${this.apiUrl}/games/${gameId}/spectate`);
+            const response = await fetch(`${this.apiUrl}/games/${gameId}/spectate`, {
+                headers: this.getAuthHeaders()
+            });
             
             if (!response.ok) {
+                if (response.status === 401) {
+                    this.showStatus('Session expired. Please login again.', 'error');
+                    this.clearAuthState();
+                    this.updateAuthUI();
+                    return;
+                }
                 const error = await response.json();
                 throw new Error(error.error || 'Failed to load game');
             }
@@ -180,19 +380,29 @@ class ChessApp {
     }
 
     async joinGame(gameId) {
+        if (!this.isAuthenticated()) {
+            this.showStatus('Please login to join games', 'error');
+            this.showAuthModal();
+            return;
+        }
+        
         try {
             this.showStatus('Joining game...', 'info');
             const response = await fetch(`${this.apiUrl}/games/${gameId}/join`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     player_id: this.playerId
                 })
             });
             
             if (!response.ok) {
+                if (response.status === 401) {
+                    this.showStatus('Session expired. Please login again.', 'error');
+                    this.clearAuthState();
+                    this.updateAuthUI();
+                    return;
+                }
                 const error = await response.json();
                 throw new Error(error.error || 'Failed to join game');
             }
@@ -224,11 +434,27 @@ class ChessApp {
     }
 
     async listGames() {
+        if (!this.isAuthenticated()) {
+            this.showStatus('Please login to view games', 'error');
+            this.showAuthModal();
+            return;
+        }
+        
         try {
             this.showStatus('Loading games...', 'info');
-            const response = await fetch(`${this.apiUrl}/games/list`);
+            const response = await fetch(`${this.apiUrl}/games/list`, {
+                headers: this.getAuthHeaders()
+            });
             
-            if (!response.ok) throw new Error('Failed to load games');
+            if (!response.ok) {
+                if (response.status === 401) {
+                    this.showStatus('Session expired. Please login again.', 'error');
+                    this.clearAuthState();
+                    this.updateAuthUI();
+                    return;
+                }
+                throw new Error('Failed to load games');
+            }
             
             const data = await response.json();
             this.displayGamesList(data.games);
@@ -291,9 +517,20 @@ class ChessApp {
         if (!this.gameId) return;
         
         try {
-            const response = await fetch(`${this.apiUrl}/games/${this.gameId}`);
+            const response = await fetch(`${this.apiUrl}/games/${this.gameId}`, {
+                headers: this.getAuthHeaders()
+            });
             
-            if (!response.ok) throw new Error('Failed to load game state');
+            if (!response.ok) {
+                if (response.status === 401) {
+                    this.showStatus('Session expired. Please login again.', 'error');
+                    this.clearAuthState();
+                    this.updateAuthUI();
+                    this.stopPolling();
+                    return;
+                }
+                throw new Error('Failed to load game state');
+            }
             
             const data = await response.json();
             this.gameState = data;
@@ -585,9 +822,7 @@ class ChessApp {
             
             const response = await fetch(`${this.apiUrl}/games/${this.gameId}/move`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     player_id: this.playerId,
                     chess_move: {
@@ -600,6 +835,13 @@ class ChessApp {
             });
             
             if (!response.ok) {
+                if (response.status === 401) {
+                    this.showStatus('Session expired. Please login again.', 'error');
+                    this.clearAuthState();
+                    this.updateAuthUI();
+                    this.stopPolling();
+                    return;
+                }
                 const error = await response.json();
                 throw new Error(error.error || 'Invalid move');
             }
