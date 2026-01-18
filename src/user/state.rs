@@ -20,18 +20,7 @@ impl UserState {
         }
     }
 
-    pub async fn register_user(
-        &self,
-        username: String,
-        email: String,
-        password: String,
-    ) -> Result<(String, User), String> {
-        // Validate input
-        if username.is_empty() || username.len() < 3 {
-            return Err("Username must be at least 3 characters long".to_string());
-        }
-
-        // Basic email validation: must contain @ with text before and after
+    fn validate_email(email: &str) -> Result<(), String> {
         if email.is_empty() || !email.contains('@') {
             return Err("Invalid email address".to_string());
         }
@@ -47,22 +36,38 @@ impl UserState {
             return Err("Invalid email address".to_string());
         }
 
+        Ok(())
+    }
+
+    pub async fn register_user(
+        &self,
+        username: String,
+        email: String,
+        password: String,
+    ) -> Result<(String, User), String> {
+        // Validate input
+        if username.is_empty() || username.len() < 3 {
+            return Err("Username must be at least 3 characters long".to_string());
+        }
+
+        Self::validate_email(&email)?;
+
         if password.is_empty() || password.len() < 6 {
             return Err("Password must be at least 6 characters long".to_string());
         }
 
         // Check if username or email already exists
-        let username_map = self.username_to_id.read().await;
-        if username_map.contains_key(&username) {
-            return Err("Username already exists".to_string());
-        }
+        {
+            let username_map = self.username_to_id.read().await;
+            if username_map.contains_key(&username) {
+                return Err("Username already exists".to_string());
+            }
 
-        let email_map = self.email_to_id.read().await;
-        if email_map.contains_key(&email) {
-            return Err("Email already registered".to_string());
-        }
-        drop(username_map);
-        drop(email_map);
+            let email_map = self.email_to_id.read().await;
+            if email_map.contains_key(&email) {
+                return Err("Email already registered".to_string());
+            }
+        } // Read locks automatically dropped here
 
         // Hash password
         let password_hash = hash_password(&password)?;

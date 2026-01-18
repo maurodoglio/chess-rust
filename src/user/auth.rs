@@ -5,9 +5,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 // JWT secret should be loaded from environment variable in production
 // For development, use: export JWT_SECRET="your-secret-key-here"
+// WARNING: The default fallback is insecure and should only be used in development
 fn get_jwt_secret() -> String {
-    std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "your-secret-key-change-in-production".to_string())
+    std::env::var("JWT_SECRET").unwrap_or_else(|_| {
+        eprintln!("WARNING: JWT_SECRET not set. Using insecure default. Set JWT_SECRET environment variable for production.");
+        "insecure-default-key-for-development-only".to_string()
+    })
 }
 
 const TOKEN_EXPIRATION_HOURS: u64 = 24;
