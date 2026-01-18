@@ -32,6 +32,7 @@ impl UserStore {
         users.get(username).cloned()
     }
 
+    #[allow(dead_code)]
     pub async fn user_exists(&self, username: &str) -> bool {
         let users = self.users.read().await;
         users.contains_key(username)
