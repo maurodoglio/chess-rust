@@ -31,7 +31,19 @@ impl UserState {
             return Err("Username must be at least 3 characters long".to_string());
         }
 
+        // Basic email validation: must contain @ with text before and after
         if email.is_empty() || !email.contains('@') {
+            return Err("Invalid email address".to_string());
+        }
+
+        // More thorough email validation
+        let parts: Vec<&str> = email.split('@').collect();
+        if parts.len() != 2 || parts[0].is_empty() || parts[1].is_empty() {
+            return Err("Invalid email address".to_string());
+        }
+
+        // Check domain part has at least one dot and proper format
+        if !parts[1].contains('.') || parts[1].starts_with('.') || parts[1].ends_with('.') {
             return Err("Invalid email address".to_string());
         }
 
@@ -229,6 +241,51 @@ mod tests {
 
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("at least 6 characters"));
+    }
+
+    #[tokio::test]
+    async fn test_register_invalid_email_no_domain() {
+        let state = UserState::new();
+        let result = state
+            .register_user(
+                "testuser".to_string(),
+                "test@".to_string(),
+                "password123".to_string(),
+            )
+            .await;
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid email"));
+    }
+
+    #[tokio::test]
+    async fn test_register_invalid_email_no_username() {
+        let state = UserState::new();
+        let result = state
+            .register_user(
+                "testuser".to_string(),
+                "@example.com".to_string(),
+                "password123".to_string(),
+            )
+            .await;
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid email"));
+    }
+
+    #[tokio::test]
+    async fn test_register_invalid_email_no_dot() {
+        let state = UserState::new();
+        let result = state
+            .register_user(
+                "testuser".to_string(),
+                "test@examplecom".to_string(),
+                "password123".to_string(),
+            )
+            .await;
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid email"));
     }
 
     #[tokio::test]

@@ -287,6 +287,9 @@ For detailed Docker deployment instructions, see [DOCKER.md](DOCKER.md)
 # Build the project
 cargo build
 
+# Set JWT secret (recommended for production)
+export JWT_SECRET="your-secure-random-secret-key-here"
+
 # Run the server
 cargo run
 
@@ -295,6 +298,10 @@ cargo test
 ```
 
 The server will start on `http://0.0.0.0:3000`
+
+**Environment Variables:**
+- `PORT` - Server port (default: 3000)
+- `JWT_SECRET` - Secret key for JWT token signing (optional, but recommended for production)
 
 ## Web Frontend
 

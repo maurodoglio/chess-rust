@@ -3,7 +3,13 @@ use bcrypt::{hash, verify, DEFAULT_COST};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const JWT_SECRET: &str = "your-secret-key-change-in-production";
+// JWT secret should be loaded from environment variable in production
+// For development, use: export JWT_SECRET="your-secret-key-here"
+fn get_jwt_secret() -> String {
+    std::env::var("JWT_SECRET")
+        .unwrap_or_else(|_| "your-secret-key-change-in-production".to_string())
+}
+
 const TOKEN_EXPIRATION_HOURS: u64 = 24;
 
 pub fn hash_password(password: &str) -> Result<String, String> {
@@ -27,18 +33,20 @@ pub fn generate_token(user: &User) -> Result<String, String> {
         exp: expiration as usize,
     };
 
+    let secret = get_jwt_secret();
     encode(
         &Header::default(),
         &claims,
-        &EncodingKey::from_secret(JWT_SECRET.as_ref()),
+        &EncodingKey::from_secret(secret.as_ref()),
     )
     .map_err(|e| format!("Failed to generate token: {}", e))
 }
 
 pub fn verify_token(token: &str) -> Result<Claims, String> {
+    let secret = get_jwt_secret();
     decode::<Claims>(
         token,
-        &DecodingKey::from_secret(JWT_SECRET.as_ref()),
+        &DecodingKey::from_secret(secret.as_ref()),
         &Validation::default(),
     )
     .map(|data| data.claims)
