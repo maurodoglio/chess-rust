@@ -27,3 +27,7 @@ target
 
 # Docker environment files
 .env
+
+# Server logs
+server.log
+nohup.out
