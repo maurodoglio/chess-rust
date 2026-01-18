@@ -27,7 +27,10 @@ class ChessApp {
         
         // Restore game session if one exists (async operation, non-blocking)
         if (this.loadGameSession()) {
-            this.restoreGameSession();
+            this.restoreGameSession().catch(error => {
+                console.error('Failed to restore game session:', error);
+                this.clearGameSession();
+            });
         }
     }
 
@@ -69,18 +72,24 @@ class ChessApp {
 
     // Helper method to deserialize nullable values from localStorage
     deserializeNullableValue(storedValue) {
-        return (storedValue && storedValue !== NULL_PLACEHOLDER) ? storedValue : null;
+        // Check specifically for null, undefined, and NULL_PLACEHOLDER
+        // to avoid incorrectly treating falsy values like '' or '0' as null
+        if (storedValue === null || storedValue === undefined || storedValue === NULL_PLACEHOLDER) {
+            return null;
+        }
+        return storedValue;
     }
 
     loadGameSession() {
         const gameId = localStorage.getItem('chess_game_id');
         const playerColorStr = localStorage.getItem('chess_player_color');
-        const isSpectator = localStorage.getItem('chess_is_spectator') === 'true';
+        const isSpectatorStr = localStorage.getItem('chess_is_spectator');
         
-        if (gameId && this.isAuthenticated()) {
+        // Validate that we have all required session data
+        if (gameId && playerColorStr !== null && isSpectatorStr !== null && this.isAuthenticated()) {
             this.gameId = gameId;
             this.playerColor = this.deserializeNullableValue(playerColorStr);
-            this.isSpectator = isSpectator;
+            this.isSpectator = isSpectatorStr === 'true';
             return true;
         }
         return false;
