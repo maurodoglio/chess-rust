@@ -55,6 +55,8 @@ class ChessApp {
         this.username = null;
         localStorage.removeItem('chess_auth_token');
         localStorage.removeItem('chess_username');
+        // Clear game session when auth is cleared to prevent orphaned sessions
+        this.clearGameSession();
     }
 
     loadGameSession() {
@@ -64,7 +66,8 @@ class ChessApp {
         
         if (gameId && this.isAuthenticated()) {
             this.gameId = gameId;
-            this.playerColor = playerColor;
+            // Convert empty string back to null for playerColor
+            this.playerColor = playerColor || null;
             this.isSpectator = isSpectator;
             return true;
         }
@@ -90,7 +93,10 @@ class ChessApp {
     }
 
     async restoreGameSession() {
-        if (!this.gameId) return;
+        if (!this.gameId) {
+            console.log('No game session to restore');
+            return;
+        }
         
         try {
             this.showStatus('Restoring game session...', 'info');
