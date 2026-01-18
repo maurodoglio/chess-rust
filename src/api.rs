@@ -1,8 +1,10 @@
+use crate::auth::{self, UserStore};
 use crate::chess::Move;
 use crate::game::{GameSession, GameState};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
+    middleware,
     response::Json,
     routing::{get, post},
     Router,
@@ -51,9 +53,15 @@ pub struct GameInfo {
     pub is_full: bool,
 }
 
-pub fn create_router(game_state: GameState) -> Router {
-    Router::new()
+pub fn create_router(game_state: GameState, user_store: UserStore) -> Router {
+    // Public routes (no authentication required)
+    let public_routes = Router::new()
         .route("/health", get(health_check))
+        .route("/auth/register", post(auth::register))
+        .route("/auth/login", post(auth::login));
+
+    // Protected routes (authentication required)
+    let protected_routes = Router::new()
         .route("/games", post(create_game))
         .route("/games/list", get(list_games))
         .route("/games/:game_id", get(get_game))
@@ -63,7 +71,11 @@ pub fn create_router(game_state: GameState) -> Router {
         .route("/games/:game_id/resign", post(resign_game))
         .route("/games/:game_id/offer-draw", post(offer_draw))
         .route("/games/:game_id/accept-draw", post(accept_draw))
-        .with_state(game_state)
+        .layer(middleware::from_fn(auth::auth_middleware))
+        .with_state(game_state.clone());
+
+    // Combine routes
+    public_routes.merge(protected_routes).with_state(user_store)
 }
 
 async fn health_check() -> &'static str {

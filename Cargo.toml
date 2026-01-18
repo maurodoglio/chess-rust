@@ -13,3 +13,7 @@ serde_json = "1.0"
 uuid = { version = "1.6", features = ["v4", "serde"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+jsonwebtoken = "9.3"
+bcrypt = "0.15"
+axum-extra = { version = "0.9", features = ["typed-header"] }
+headers = "0.4"
