@@ -4,6 +4,8 @@ A multiplayer web chess game backend implementation built in Rust. This server p
 
 ## Features
 
+- **JWT Authentication**: Secure user registration and login with JWT token-based authentication
+- **User Account Management**: Create and manage user accounts with secure password hashing
 - **Complete Chess Game Logic**: Full implementation of chess rules including piece movement validation
 - **Check, Checkmate, and Stalemate Detection**: Automatically detects check, checkmate, and stalemate conditions
 - **Move Validation**: Prevents illegal moves that would leave the king in check
@@ -16,11 +18,70 @@ A multiplayer web chess game backend implementation built in Rust. This server p
 
 ## API Endpoints
 
+### Authentication
+
+All game-related endpoints (except `/health`) require authentication. Include the JWT token in the `Authorization` header:
+
+```
+Authorization: Bearer <your-jwt-token>
+```
+
+#### Register a New User
+```
+POST /auth/register
+Content-Type: application/json
+
+{
+  "username": "your-username",
+  "password": "your-password"
+}
+```
+
+Requirements:
+- Username must be at least 3 characters long
+- Password must be at least 6 characters long
+- Username must be unique
+
+Returns:
+```json
+{
+  "token": "jwt-token-here",
+  "username": "your-username"
+}
+```
+
+#### Login
+```
+POST /auth/login
+Content-Type: application/json
+
+{
+  "username": "your-username",
+  "password": "your-password"
+}
+```
+
+Returns:
+```json
+{
+  "token": "jwt-token-here",
+  "username": "your-username"
+}
+```
+
+The JWT token expires after 24 hours. You can configure the secret key by setting the `JWT_SECRET` environment variable (defaults to a development key).
+
+### Game Endpoints
+
+All endpoints below require a valid JWT token in the `Authorization` header.
+
 ### Health Check
 ```
 GET /health
 ```
 Returns: `OK`
+
+(This endpoint does not require authentication)
 
 ### Create a New Game
 ```
@@ -280,6 +341,13 @@ For more details, see [frontend/README.md](frontend/README.md)
 
 The project is organized into several modules:
 
+- **auth**: Authentication and user management
+  - `user.rs`: User model and authentication request/response types
+  - `store.rs`: In-memory user storage
+  - `password.rs`: Password hashing and verification with bcrypt
+  - `jwt.rs`: JWT token generation and validation
+  - `middleware.rs`: Authentication middleware for protected routes
+  - `handlers.rs`: Registration and login endpoint handlers
 - **chess**: Core chess game logic
   - `piece.rs`: Piece types and colors
   - `board.rs`: Board representation and manipulation
@@ -292,21 +360,42 @@ The project is organized into several modules:
 ## Example Usage
 
 ```bash
-# Create a new game
-GAME_ID=$(curl -X POST http://localhost:3000/games | jq -r '.game_id')
+# Register a new user
+curl -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "player1", "password": "password123"}'
+
+# Response: {"token": "jwt-token-here", "username": "player1"}
+
+# Save the token for authenticated requests
+TOKEN="your-jwt-token-here"
+
+# Create a new game (requires authentication)
+GAME_ID=$(curl -X POST http://localhost:3000/games \
+  -H "Authorization: Bearer $TOKEN" | jq -r '.game_id')
+
+# Register a second player
+curl -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "player2", "password": "password456"}'
+
+TOKEN2="second-jwt-token-here"
 
 # Player 1 joins
 curl -X POST http://localhost:3000/games/$GAME_ID/join \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"player_id": "player1"}'
 
 # Player 2 joins
 curl -X POST http://localhost:3000/games/$GAME_ID/join \
+  -H "Authorization: Bearer $TOKEN2" \
   -H "Content-Type: application/json" \
   -d '{"player_id": "player2"}'
 
 # Player 1 makes a move (e2 to e4)
 curl -X POST http://localhost:3000/games/$GAME_ID/move \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "player_id": "player1",
@@ -318,8 +407,9 @@ curl -X POST http://localhost:3000/games/$GAME_ID/move \
     }
   }'
 
-# Spectate the game (anyone can watch without joining)
-curl http://localhost:3000/games/$GAME_ID/spectate
+# Spectate the game (requires authentication)
+curl -X GET http://localhost:3000/games/$GAME_ID/spectate \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ## Future Enhancements
@@ -328,11 +418,13 @@ Potential improvements for this backend:
 
 - WebSocket support for real-time move updates
 - Game persistence (database integration)
-- Authentication and user accounts
+- User profile management and preferences
 - Move history and game replay
 - En passant and castling support
 - Game timers and time controls
 - Game ratings and statistics
+- Password reset functionality
+- Refresh tokens for extended sessions
 
 ## License
 
