@@ -166,7 +166,25 @@ The game prevents illegal moves that would leave the player's own king in check.
 
 ## Running the Server
 
-### Option 1: Deploy to Render (Recommended for Cloud Deployment)
+### Option 1: Deploy to Azure (Recommended for Production)
+
+Deploy to Microsoft Azure using Docker Compose with Azure Container Instances:
+
+```bash
+# Login to Azure
+az login
+
+# Create Azure context
+docker context create aci azure-chess-rust
+
+# Deploy with Docker Compose
+docker compose -f docker-compose.azure.yml up
+```
+
+**📚 Documentation:**
+- [Azure Deployment Guide](AZURE-DEPLOYMENT.md) - Complete Azure deployment guide with multiple deployment methods
+
+### Option 2: Deploy to Render (Recommended for Quick Cloud Deployment)
 
 Deploy both backend and frontend to the cloud with one click:
 
@@ -179,7 +197,7 @@ Deploy both backend and frontend to the cloud with one click:
 - [Quick Start Guide](RENDER-QUICKSTART.md) - Get started in 5 minutes
 - [Detailed Guide](RENDER-DEPLOYMENT.md) - Complete deployment documentation
 
-### Option 2: Using Docker (Recommended for Local Development)
+### Option 3: Using Docker (Recommended for Local Development)
 
 The easiest way to run both backend and frontend together locally:
 
@@ -197,7 +215,7 @@ This will start:
 
 For detailed Docker deployment instructions, see [DOCKER.md](DOCKER.md)
 
-### Option 3: Running Locally (for Development)
+### Option 4: Running Locally (for Development)
 
 #### Prerequisites
 - Rust 1.82 or later

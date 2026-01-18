@@ -1,0 +1,45 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chess-backend-azure
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    environment:
+      - RUST_LOG=${RUST_LOG:-info}
+    networks:
+      - chess-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: chess-frontend-azure
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    environment:
+      - API_URL=${API_URL:-http://localhost:3000}
+    networks:
+      - chess-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  chess-network:
+    driver: bridge
