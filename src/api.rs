@@ -209,7 +209,8 @@ async fn get_session_and_verify_player(
         ));
     }
 
-    let player_color = session.get_player_color(player_id)
+    let player_color = session
+        .get_player_color(player_id)
         .expect("Player color should exist after verifying player is in game");
 
     Ok((session, player_color))
@@ -220,7 +221,7 @@ async fn resign_game(
     Path(game_id): Path<String>,
     Json(request): Json<PlayerActionRequest>,
 ) -> Result<Json<GameSession>, (StatusCode, Json<ErrorResponse>)> {
-    let (mut session, player_color) = 
+    let (mut session, player_color) =
         get_session_and_verify_player(&game_state, &game_id, &request.player_id).await?;
 
     // Resign the game
@@ -229,10 +230,7 @@ async fn resign_game(
             game_state.update_game(&game_id, session.clone()).await;
             Ok(Json(session))
         }
-        Err(err) => Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: err }),
-        )),
+        Err(err) => Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: err }))),
     }
 }
 
@@ -241,7 +239,7 @@ async fn offer_draw(
     Path(game_id): Path<String>,
     Json(request): Json<PlayerActionRequest>,
 ) -> Result<Json<GameSession>, (StatusCode, Json<ErrorResponse>)> {
-    let (mut session, player_color) = 
+    let (mut session, player_color) =
         get_session_and_verify_player(&game_state, &game_id, &request.player_id).await?;
 
     // Offer a draw
@@ -250,10 +248,7 @@ async fn offer_draw(
             game_state.update_game(&game_id, session.clone()).await;
             Ok(Json(session))
         }
-        Err(err) => Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: err }),
-        )),
+        Err(err) => Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: err }))),
     }
 }
 
@@ -262,7 +257,7 @@ async fn accept_draw(
     Path(game_id): Path<String>,
     Json(request): Json<PlayerActionRequest>,
 ) -> Result<Json<GameSession>, (StatusCode, Json<ErrorResponse>)> {
-    let (mut session, player_color) = 
+    let (mut session, player_color) =
         get_session_and_verify_player(&game_state, &game_id, &request.player_id).await?;
 
     // Accept the draw
@@ -271,10 +266,7 @@ async fn accept_draw(
             game_state.update_game(&game_id, session.clone()).await;
             Ok(Json(session))
         }
-        Err(err) => Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: err }),
-        )),
+        Err(err) => Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: err }))),
     }
 }
 
@@ -286,11 +278,8 @@ mod tests {
     #[tokio::test]
     async fn test_spectate_game_not_found() {
         let game_state = GameState::new();
-        let result = spectate_game(
-            State(game_state),
-            Path("nonexistent-game-id".to_string()),
-        )
-        .await;
+        let result =
+            spectate_game(State(game_state), Path("nonexistent-game-id".to_string())).await;
 
         assert!(result.is_err());
         let (status, _) = result.unwrap_err();

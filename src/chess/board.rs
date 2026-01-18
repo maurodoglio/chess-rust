@@ -17,6 +17,7 @@ impl Board {
         board
     }
 
+    #[allow(dead_code)]
     pub fn empty() -> Self {
         Self {
             squares: [[None; BOARD_SIZE]; BOARD_SIZE],
@@ -59,6 +60,7 @@ impl Board {
         }
     }
 
+    #[allow(dead_code)]
     pub fn set(&mut self, row: usize, col: usize, piece: Option<Piece>) {
         if row < BOARD_SIZE && col < BOARD_SIZE {
             self.squares[row][col] = piece;
@@ -89,6 +91,7 @@ impl Board {
         }
     }
 
+    #[allow(dead_code)]
     pub fn is_valid_position(row: i32, col: i32) -> bool {
         row >= 0 && row < BOARD_SIZE as i32 && col >= 0 && col < BOARD_SIZE as i32
     }

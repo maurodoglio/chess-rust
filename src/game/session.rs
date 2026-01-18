@@ -52,24 +52,24 @@ impl GameSession {
     pub fn is_player_in_game(&self, player_id: &str) -> bool {
         self.white_player
             .as_ref()
-            .map_or(false, |p| p.id == player_id)
+            .is_some_and(|p| p.id == player_id)
             || self
                 .black_player
                 .as_ref()
-                .map_or(false, |p| p.id == player_id)
+                .is_some_and(|p| p.id == player_id)
     }
 
     pub fn get_player_color(&self, player_id: &str) -> Option<Color> {
         if self
             .white_player
             .as_ref()
-            .map_or(false, |p| p.id == player_id)
+            .is_some_and(|p| p.id == player_id)
         {
             Some(Color::White)
         } else if self
             .black_player
             .as_ref()
-            .map_or(false, |p| p.id == player_id)
+            .is_some_and(|p| p.id == player_id)
         {
             Some(Color::Black)
         } else {
