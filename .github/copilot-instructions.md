@@ -15,7 +15,7 @@ This is a multiplayer web chess game backend implementation built in Rust using 
 
 - **Build**: `cargo build` - Compile the project
 - **Run**: `cargo run` - Start the server on `http://0.0.0.0:3000`
-- **Test**: `cargo test` - Run all unit tests (30 tests should pass)
+- **Test**: `cargo test` - Run all unit tests (31 tests should pass)
 - **Format**: `cargo fmt` - Format code according to Rust style guidelines
 - **Lint**: `cargo clippy` - Run linter to catch common mistakes
 
@@ -25,6 +25,7 @@ This is a multiplayer web chess game backend implementation built in Rust using 
 src/
 ├── main.rs           # Application entry point, server setup
 ├── api.rs            # REST API handlers and routing
+├── ws.rs             # WebSocket connection handling for real-time updates
 ├── chess/
 │   ├── mod.rs        # Chess module exports
 │   ├── piece.rs      # Piece types (Pawn, Knight, Bishop, Rook, Queen, King) and colors
@@ -33,12 +34,12 @@ src/
 └── game/
     ├── mod.rs        # Game module exports
     ├── session.rs    # Game session and player management
-    └── state.rs      # Shared state for multiple concurrent games
+    └── state.rs      # Shared state with WebSocket broadcasting
 ```
 
 ## Architecture
 
-The project is organized into three main modules:
+The project is organized into four main modules:
 
 - **chess**: Core chess game logic
   - `piece.rs`: Piece types (Pawn, Knight, Bishop, Rook, Queen, King) and colors (White, Black)
@@ -46,8 +47,9 @@ The project is organized into three main modules:
   - `game.rs`: Game rules, move validation, and game state management
 - **game**: Multiplayer session management
   - `session.rs`: Game session and player management
-  - `state.rs`: Shared state for multiple concurrent games
+  - `state.rs`: Shared state for multiple concurrent games with WebSocket broadcasting
 - **api**: REST API handlers and routing using Axum
+- **ws**: WebSocket connection handling for real-time game updates
 
 ## Coding Standards
 

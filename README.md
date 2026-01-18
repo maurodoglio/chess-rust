@@ -12,6 +12,7 @@ A multiplayer web chess game backend implementation built in Rust. This server p
 - **Captured Pieces and Score Tracking**: Automatically tracks captured pieces and calculates running scores based on piece values (Pawn: 1, Knight/Bishop: 3, Rook: 5, Queen: 9)
 - **Multiplayer Support**: Players can join games from different devices and play in real-time
 - **Spectator Mode**: Watch games in progress without joining as a player
+- **WebSocket Support**: Real-time game updates via WebSocket connections (no polling required)
 - **REST API**: Simple HTTP endpoints for game management
 - **Game State Management**: Maintains multiple simultaneous games with proper state tracking
 - **CORS Enabled**: Ready for web frontend integration
@@ -199,6 +200,40 @@ Accepts a draw offer from the opponent. The game status will be set to `Draw`. R
 
 **Note**: You cannot accept your own draw offer.
 
+### WebSocket Connection (Real-time Updates)
+```
+GET /games/:game_id/ws
+Upgrade: websocket
+```
+Establishes a WebSocket connection for real-time game updates. Once connected, the client will:
+- Immediately receive the current game state as JSON
+- Automatically receive updates whenever the game state changes (moves, player joins, draws, resignations)
+
+**WebSocket Message Format**: All messages sent from the server are JSON-encoded game states identical to the REST API responses.
+
+**Example using JavaScript**:
+```javascript
+const ws = new WebSocket('ws://localhost:3000/games/GAME_ID/ws');
+
+ws.onmessage = (event) => {
+  const gameState = JSON.parse(event.data);
+  console.log('Game updated:', gameState);
+  // Update UI with new game state
+};
+
+ws.onerror = (error) => {
+  console.error('WebSocket error:', error);
+};
+```
+
+**Benefits**:
+- Eliminates need for polling
+- Instant updates when game state changes
+- Lower server load and network traffic
+- Better user experience with real-time updates
+
+**Note**: The REST API endpoints remain fully functional. WebSocket support is optional and can be used alongside or instead of polling for game state updates.
+
 **Coordinate System**: The board uses a 0-7 coordinate system where:
 - Row 0 = White's back rank (a1-h1)
 - Row 7 = Black's back rank (a8-h8)
@@ -354,8 +389,9 @@ The project is organized into several modules:
   - `game.rs`: Game rules and move validation
 - **game**: Multiplayer session management
   - `session.rs`: Game session and player management
-  - `state.rs`: Shared state for multiple games
+  - `state.rs`: Shared state for multiple games with WebSocket broadcasting
 - **api**: REST API handlers
+- **ws**: WebSocket connection handling for real-time updates
 
 ## Example Usage
 
@@ -416,7 +452,6 @@ curl -X GET http://localhost:3000/games/$GAME_ID/spectate \
 
 Potential improvements for this backend:
 
-- WebSocket support for real-time move updates
 - Game persistence (database integration)
 - User profile management and preferences
 - Move history and game replay

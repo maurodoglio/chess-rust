@@ -2,6 +2,7 @@ mod api;
 mod auth;
 mod chess;
 mod game;
+mod ws;
 
 use auth::UserStore;
 use game::GameState;

@@ -71,6 +71,7 @@ pub fn create_router(game_state: GameState, user_store: UserStore) -> Router {
         .route("/games/:game_id/resign", post(resign_game))
         .route("/games/:game_id/offer-draw", post(offer_draw))
         .route("/games/:game_id/accept-draw", post(accept_draw))
+        .route("/games/:game_id/ws", get(crate::ws::websocket_handler))
         .layer(middleware::from_fn(auth::auth_middleware))
         .with_state(game_state.clone());
 
