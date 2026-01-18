@@ -271,7 +271,8 @@ class ChessApp {
     }
 
     logout() {
-        this.clearAuthState(); // This already calls clearGameSession()
+        // clearAuthState() already calls clearGameSession(), so no need to clear game state separately
+        this.clearAuthState();
         this.updateAuthUI();
         this.showStatus('Logged out successfully', 'info');
         
