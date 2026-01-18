@@ -3,6 +3,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
 
+/// Capacity for broadcast channels used to send game updates to WebSocket clients
+const BROADCAST_CHANNEL_CAPACITY: usize = 100;
+
 #[derive(Clone)]
 pub struct GameState {
     pub games: Arc<RwLock<HashMap<String, GameSession>>>,
@@ -25,7 +28,7 @@ impl GameState {
         games.insert(game_id.clone(), session.clone());
 
         // Create a broadcast channel for this game
-        let (tx, _) = broadcast::channel(100);
+        let (tx, _) = broadcast::channel(BROADCAST_CHANNEL_CAPACITY);
         let mut broadcasters = self.broadcasters.write().await;
         broadcasters.insert(game_id.clone(), tx);
 
@@ -93,7 +96,7 @@ impl GameState {
 
         // Get or create broadcaster for this game
         let tx = broadcasters.entry(game_id.to_string()).or_insert_with(|| {
-            let (tx, _) = broadcast::channel(100);
+            let (tx, _) = broadcast::channel(BROADCAST_CHANNEL_CAPACITY);
             tx
         });
 
