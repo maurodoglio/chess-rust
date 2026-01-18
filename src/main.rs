@@ -1,10 +1,12 @@
 mod api;
 mod chess;
 mod game;
+mod user;
 
 use game::GameState;
 use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use user::UserState;
 
 #[tokio::main]
 async fn main() {
@@ -20,6 +22,9 @@ async fn main() {
     // Create shared game state
     let game_state = GameState::new();
 
+    // Create shared user state
+    let user_state = UserState::new();
+
     // Configure CORS
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -27,7 +32,7 @@ async fn main() {
         .allow_headers(Any);
 
     // Build the application with routes
-    let app = api::create_router(game_state)
+    let app = api::create_router(game_state, user_state)
         .layer(cors)
         .layer(tower_http::trace::TraceLayer::new_for_http());
 
