@@ -1,5 +1,8 @@
 // Chess Game Frontend Application
 
+// Constants for localStorage null handling
+const NULL_PLACEHOLDER = 'null';
+
 class ChessApp {
     constructor() {
         this.apiUrl = window.chessConfig?.apiUrl || 'http://localhost:3000';
@@ -22,7 +25,7 @@ class ChessApp {
         this.attachEventListeners();
         this.updateAuthUI();
         
-        // Restore game session if one exists
+        // Restore game session if one exists (async operation, non-blocking)
         if (this.loadGameSession()) {
             this.restoreGameSession();
         }
@@ -59,6 +62,16 @@ class ChessApp {
         this.clearGameSession();
     }
 
+    // Helper method to serialize nullable values for localStorage
+    serializeNullableValue(value) {
+        return value === null ? NULL_PLACEHOLDER : value;
+    }
+
+    // Helper method to deserialize nullable values from localStorage
+    deserializeNullableValue(storedValue) {
+        return (storedValue && storedValue !== NULL_PLACEHOLDER) ? storedValue : null;
+    }
+
     loadGameSession() {
         const gameId = localStorage.getItem('chess_game_id');
         const playerColorStr = localStorage.getItem('chess_player_color');
@@ -66,8 +79,7 @@ class ChessApp {
         
         if (gameId && this.isAuthenticated()) {
             this.gameId = gameId;
-            // Convert string 'null' or empty string to actual null
-            this.playerColor = (playerColorStr && playerColorStr !== 'null') ? playerColorStr : null;
+            this.playerColor = this.deserializeNullableValue(playerColorStr);
             this.isSpectator = isSpectator;
             return true;
         }
@@ -79,8 +91,7 @@ class ChessApp {
         this.playerColor = playerColor;
         this.isSpectator = isSpectator;
         localStorage.setItem('chess_game_id', gameId);
-        // Store null as the string 'null' for consistency
-        localStorage.setItem('chess_player_color', playerColor === null ? 'null' : playerColor);
+        localStorage.setItem('chess_player_color', this.serializeNullableValue(playerColor));
         localStorage.setItem('chess_is_spectator', isSpectator.toString());
     }
 
