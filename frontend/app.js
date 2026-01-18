@@ -26,6 +26,8 @@ class ChessApp {
         this.updateAuthUI();
         
         // Restore game session if one exists (async operation, non-blocking)
+        // Note: Race conditions are minimal as user cannot interact with game
+        // until gameState is loaded from server in restoreGameSession()
         if (this.loadGameSession()) {
             this.restoreGameSession().catch(error => {
                 console.error('Failed to restore game session:', error);
@@ -85,8 +87,9 @@ class ChessApp {
         const playerColorStr = localStorage.getItem('chess_player_color');
         const isSpectatorStr = localStorage.getItem('chess_is_spectator');
         
-        // Validate that we have all required session data
-        if (gameId && playerColorStr !== null && isSpectatorStr !== null && this.isAuthenticated()) {
+        // Validate that we have gameId and isSpectator flag
+        // playerColorStr can be NULL_PLACEHOLDER (for spectators) or actual color
+        if (gameId && isSpectatorStr !== null && this.isAuthenticated()) {
             this.gameId = gameId;
             this.playerColor = this.deserializeNullableValue(playerColorStr);
             this.isSpectator = isSpectatorStr === 'true';
@@ -266,8 +269,7 @@ class ChessApp {
     }
 
     logout() {
-        this.clearAuthState();
-        this.clearGameSession();
+        this.clearAuthState(); // This already calls clearGameSession()
         this.updateAuthUI();
         this.showStatus('Logged out successfully', 'info');
         
