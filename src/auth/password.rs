@@ -1,5 +1,6 @@
 use bcrypt::{hash, verify, DEFAULT_COST};
 
+// DEFAULT_COST is 12, which provides a good balance between security and performance
 pub fn hash_password(password: &str) -> Result<String, String> {
     hash(password, DEFAULT_COST).map_err(|e| format!("Password hashing error: {}", e))
 }

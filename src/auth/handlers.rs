@@ -17,7 +17,7 @@ pub async fn register(
     Json(request): Json<RegisterRequest>,
 ) -> Result<Json<AuthResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Validate username length
-    if request.username.is_empty() || request.username.len() < 3 {
+    if request.username.len() < 3 {
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse {
