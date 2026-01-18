@@ -15,7 +15,7 @@ This is a multiplayer web chess game backend implementation built in Rust using 
 
 - **Build**: `cargo build` - Compile the project
 - **Run**: `cargo run` - Start the server on `http://0.0.0.0:3000`
-- **Test**: `cargo test` - Run all unit tests (16 tests should pass)
+- **Test**: `cargo test` - Run all unit tests (30 tests should pass)
 - **Format**: `cargo fmt` - Format code according to Rust style guidelines
 - **Lint**: `cargo clippy` - Run linter to catch common mistakes
 
