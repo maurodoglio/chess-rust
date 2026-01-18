@@ -1,5 +1,9 @@
 // Chess Game Frontend Application
 
+// Constants for localStorage null handling
+// Using a distinctive placeholder to avoid conflicts with actual user data
+const NULL_PLACEHOLDER = '__NULL__';
+
 class ChessApp {
     constructor() {
         this.apiUrl = window.chessConfig?.apiUrl || 'http://localhost:3000';
@@ -21,6 +25,16 @@ class ChessApp {
         this.initializeUI();
         this.attachEventListeners();
         this.updateAuthUI();
+        
+        // Restore game session if one exists (async operation, non-blocking)
+        // Note: Race conditions are minimal as user cannot interact with game
+        // until gameState is loaded from server in restoreGameSession()
+        if (this.loadGameSession()) {
+            this.restoreGameSession().catch(error => {
+                console.error('Failed to restore game session:', error);
+                this.clearGameSession();
+            });
+        }
     }
 
     generatePlayerId() {
@@ -50,6 +64,95 @@ class ChessApp {
         this.username = null;
         localStorage.removeItem('chess_auth_token');
         localStorage.removeItem('chess_username');
+        // Clear game session when auth is cleared to prevent orphaned sessions
+        this.clearGameSession();
+    }
+
+    // Helper method to serialize nullable values for localStorage
+    serializeNullableValue(value) {
+        return value === null ? NULL_PLACEHOLDER : value;
+    }
+
+    // Helper method to deserialize nullable values from localStorage
+    deserializeNullableValue(storedValue) {
+        // localStorage.getItem() returns either a string or null (never undefined)
+        // Check specifically for null and NULL_PLACEHOLDER
+        if (storedValue === null || storedValue === NULL_PLACEHOLDER) {
+            return null;
+        }
+        return storedValue;
+    }
+
+    loadGameSession() {
+        const gameId = localStorage.getItem('chess_game_id');
+        const playerColorStr = localStorage.getItem('chess_player_color');
+        const isSpectatorStr = localStorage.getItem('chess_is_spectator');
+        
+        // Validate that we have essential session data (gameId and isSpectator)
+        // playerColorStr can be NULL_PLACEHOLDER (for spectators) or actual color
+        // Use explicit null checks for consistency
+        if (gameId !== null && isSpectatorStr !== null && this.isAuthenticated()) {
+            this.gameId = gameId;
+            this.playerColor = this.deserializeNullableValue(playerColorStr);
+            this.isSpectator = isSpectatorStr === 'true';
+            return true;
+        }
+        return false;
+    }
+
+    saveGameSession(gameId, playerColor, isSpectator) {
+        this.gameId = gameId;
+        this.playerColor = playerColor;
+        this.isSpectator = isSpectator;
+        localStorage.setItem('chess_game_id', gameId);
+        localStorage.setItem('chess_player_color', this.serializeNullableValue(playerColor));
+        localStorage.setItem('chess_is_spectator', isSpectator.toString());
+    }
+
+    clearGameSession() {
+        this.gameId = null;
+        this.playerColor = null;
+        this.isSpectator = false;
+        localStorage.removeItem('chess_game_id');
+        localStorage.removeItem('chess_player_color');
+        localStorage.removeItem('chess_is_spectator');
+    }
+
+    async restoreGameSession() {
+        if (!this.gameId) {
+            console.log('No game session to restore');
+            return;
+        }
+        
+        try {
+            this.showStatus('Restoring game session...', 'info');
+            
+            // Update UI to show game info
+            document.getElementById('playerInfo').style.display = 'block';
+            document.getElementById('gameId').textContent = this.gameId;
+            
+            if (this.isSpectator) {
+                document.getElementById('playerColorInfo').style.display = 'none';
+                document.getElementById('spectatorInfo').style.display = 'block';
+            } else if (this.playerColor) {
+                document.getElementById('playerColor').textContent = this.playerColor;
+                document.getElementById('playerColorInfo').style.display = 'block';
+                document.getElementById('spectatorInfo').style.display = 'none';
+            }
+            
+            // Recreate the board with correct orientation
+            this.createBoard();
+            
+            // Load game state and start polling
+            await this.loadGameState();
+            this.startPolling();
+            
+            this.showStatus('Game session restored!', 'success');
+        } catch (error) {
+            this.showStatus('Could not restore game session: ' + error.message, 'error');
+            // Clear invalid session
+            this.clearGameSession();
+        }
     }
 
     isAuthenticated() {
@@ -168,20 +271,16 @@ class ChessApp {
     }
 
     logout() {
+        // clearAuthState() already calls clearGameSession(), so no need to clear game state separately
         this.clearAuthState();
         this.updateAuthUI();
         this.showStatus('Logged out successfully', 'info');
         
-        // Clear game state if any
-        if (this.gameId) {
-            this.gameId = null;
-            this.playerColor = null;
-            this.isSpectator = false;
-            document.getElementById('playerInfo').style.display = 'none';
-            if (this.pollInterval) {
-                clearInterval(this.pollInterval);
-                this.pollInterval = null;
-            }
+        // Clear game UI
+        document.getElementById('playerInfo').style.display = 'none';
+        if (this.pollInterval) {
+            clearInterval(this.pollInterval);
+            this.pollInterval = null;
         }
     }
 
@@ -342,9 +441,9 @@ class ChessApp {
             }
             
             const data = await response.json();
-            this.gameId = gameId;
-            this.playerColor = null;
-            this.isSpectator = true;
+            
+            // Save game session to localStorage
+            this.saveGameSession(gameId, null, true);
             
             document.getElementById('playerInfo').style.display = 'block';
             document.getElementById('gameId').textContent = this.gameId;
@@ -408,9 +507,9 @@ class ChessApp {
             }
             
             const data = await response.json();
-            this.gameId = gameId;
-            this.playerColor = data.color;
-            this.isSpectator = false;
+            
+            // Save game session to localStorage
+            this.saveGameSession(gameId, data.color, false);
             
             document.getElementById('playerInfo').style.display = 'block';
             document.getElementById('gameId').textContent = this.gameId;
