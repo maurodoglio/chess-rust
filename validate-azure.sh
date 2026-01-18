@@ -163,7 +163,7 @@ main() {
     print_header "5. Docker Build Test (Optional)"
     
     echo -e "${YELLOW}Do you want to test building the Docker images? (y/N)${NC}"
-    read -r -t 10 response || response="n"
+    read -r -t 30 response || response="n"
     
     if [[ "$response" =~ ^[Yy]$ ]]; then
         print_info "Building backend image..."

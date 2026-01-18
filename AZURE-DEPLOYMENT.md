@@ -284,13 +284,27 @@ FRONTEND_PORT=80
 API_URL=http://your-backend-dns:3000
 ```
 
-### Health Checks
+### Health Monitoring
 
-The Azure deployment includes health checks:
-- **Backend**: `http://localhost:3000/health`
-- **Frontend**: `http://localhost/`
+For Azure Container Instances, you can monitor container health using:
 
-These ensure containers are ready before receiving traffic.
+```bash
+# Check container state
+az container show \
+  --resource-group $RESOURCE_GROUP \
+  --name chess-backend-azure \
+  --query instanceView.state
+
+# Test backend health endpoint
+curl http://your-backend-url:3000/health
+
+# View container logs for errors
+az container logs \
+  --resource-group $RESOURCE_GROUP \
+  --name chess-backend-azure
+```
+
+**Note**: Health checks in Azure Container Instances are configured differently than in Docker Compose. When deploying to ACI, health probes are automatically configured based on the exposed ports.
 
 ### Resource Sizing
 
