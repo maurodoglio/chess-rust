@@ -1,6 +1,7 @@
 mod api;
 mod chess;
 mod game;
+mod ws;
 
 use game::GameState;
 use tower_http::cors::{Any, CorsLayer};

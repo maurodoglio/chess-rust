@@ -63,6 +63,7 @@ pub fn create_router(game_state: GameState) -> Router {
         .route("/games/:game_id/resign", post(resign_game))
         .route("/games/:game_id/offer-draw", post(offer_draw))
         .route("/games/:game_id/accept-draw", post(accept_draw))
+        .route("/games/:game_id/ws", get(crate::ws::websocket_handler))
         .with_state(game_state)
 }
 
