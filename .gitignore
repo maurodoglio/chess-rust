@@ -29,3 +29,8 @@ target
 .env
 .env.azure
 .env.render
+
+# Game persistence data
+games_data/
+test_games_save_load/
+test_games_creates_dir/
