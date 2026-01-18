@@ -71,29 +71,17 @@ mod tests {
     use super::*;
     use std::fs;
 
-    const TEST_DIR: &str = "test_games_data";
-
-    fn setup_test_dir() {
-        let _ = fs::remove_dir_all(TEST_DIR);
-        fs::create_dir_all(TEST_DIR).unwrap();
-    }
-
-    fn cleanup_test_dir() {
-        let _ = fs::remove_dir_all(TEST_DIR);
-    }
-
     #[test]
     fn test_save_and_load_game() {
-        setup_test_dir();
+        let test_dir = "test_games_save_load";
+        let _ = fs::remove_dir_all(test_dir);
+        fs::create_dir_all(test_dir).unwrap();
 
         // Create a test game
-        let mut session = GameSession::new();
-        session.id = "test-game-123".to_string();
+        let session = GameSession::new();
 
-        // Override the directory for testing
-        let file_path = Path::new(TEST_DIR).join(format!("{}.json", session.id));
-
-        // Manually save to test directory
+        // Save to test directory
+        let file_path = Path::new(test_dir).join(format!("{}.json", session.id));
         let json = serde_json::to_string_pretty(&session).unwrap();
         fs::write(&file_path, json).unwrap();
 
@@ -105,44 +93,39 @@ mod tests {
         assert_eq!(loaded_session.white_player, session.white_player);
         assert_eq!(loaded_session.black_player, session.black_player);
 
-        cleanup_test_dir();
+        let _ = fs::remove_dir_all(test_dir);
     }
 
     #[test]
     fn test_save_game_creates_directory() {
-        let temp_dir = "temp_test_games";
-        let _ = fs::remove_dir_all(temp_dir);
+        let test_dir = "test_games_creates_dir";
+        let _ = fs::remove_dir_all(test_dir);
 
         // Create session and manually save
         let session = GameSession::new();
-        fs::create_dir_all(temp_dir).unwrap();
-        let file_path = Path::new(temp_dir).join(format!("{}.json", session.id));
+        fs::create_dir_all(test_dir).unwrap();
+        let file_path = Path::new(test_dir).join(format!("{}.json", session.id));
         let json = serde_json::to_string_pretty(&session).unwrap();
         fs::write(&file_path, json).unwrap();
 
-        assert!(Path::new(temp_dir).exists());
+        assert!(Path::new(test_dir).exists());
 
-        let _ = fs::remove_dir_all(temp_dir);
+        let _ = fs::remove_dir_all(test_dir);
     }
 
     #[test]
     fn test_load_games_empty_directory() {
-        setup_test_dir();
-
         // Load from empty directory (should return empty HashMap without error)
         // We can't easily test load_games directly with a custom directory,
         // so we'll just verify the function signature is correct
         let games = HashMap::<String, GameSession>::new();
         assert_eq!(games.len(), 0);
-
-        cleanup_test_dir();
     }
 
     #[test]
     fn test_serialization_preserves_game_state() {
         // Create a game with some moves
         let mut session = GameSession::new();
-        session.id = "test-game-456".to_string();
 
         // Make a move
         let chess_move = crate::chess::Move {

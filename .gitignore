@@ -32,5 +32,5 @@ target
 
 # Game persistence data
 games_data/
-test_games_data/
-temp_test_games/
+test_games_save_load/
+test_games_creates_dir/
