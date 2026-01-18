@@ -1,7 +1,8 @@
 // Chess Game Frontend Application
 
 // Constants for localStorage null handling
-const NULL_PLACEHOLDER = 'null';
+// Using a distinctive placeholder to avoid conflicts with actual user data
+const NULL_PLACEHOLDER = '__NULL__';
 
 class ChessApp {
     constructor() {
@@ -74,9 +75,9 @@ class ChessApp {
 
     // Helper method to deserialize nullable values from localStorage
     deserializeNullableValue(storedValue) {
-        // Check specifically for null, undefined, and NULL_PLACEHOLDER
-        // to avoid incorrectly treating falsy values like '' or '0' as null
-        if (storedValue === null || storedValue === undefined || storedValue === NULL_PLACEHOLDER) {
+        // localStorage.getItem() returns either a string or null (never undefined)
+        // Check specifically for null and NULL_PLACEHOLDER
+        if (storedValue === null || storedValue === NULL_PLACEHOLDER) {
             return null;
         }
         return storedValue;
@@ -87,9 +88,10 @@ class ChessApp {
         const playerColorStr = localStorage.getItem('chess_player_color');
         const isSpectatorStr = localStorage.getItem('chess_is_spectator');
         
-        // Validate that we have gameId and isSpectator flag
+        // Validate that we have essential session data (gameId and isSpectator)
         // playerColorStr can be NULL_PLACEHOLDER (for spectators) or actual color
-        if (gameId && isSpectatorStr !== null && this.isAuthenticated()) {
+        // Use explicit null checks for consistency
+        if (gameId !== null && isSpectatorStr !== null && this.isAuthenticated()) {
             this.gameId = gameId;
             this.playerColor = this.deserializeNullableValue(playerColorStr);
             this.isSpectator = isSpectatorStr === 'true';
