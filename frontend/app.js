@@ -21,6 +21,11 @@ class ChessApp {
         this.initializeUI();
         this.attachEventListeners();
         this.updateAuthUI();
+        
+        // Restore game session if one exists
+        if (this.loadGameSession()) {
+            this.restoreGameSession();
+        }
     }
 
     generatePlayerId() {
@@ -50,6 +55,72 @@ class ChessApp {
         this.username = null;
         localStorage.removeItem('chess_auth_token');
         localStorage.removeItem('chess_username');
+    }
+
+    loadGameSession() {
+        const gameId = localStorage.getItem('chess_game_id');
+        const playerColor = localStorage.getItem('chess_player_color');
+        const isSpectator = localStorage.getItem('chess_is_spectator') === 'true';
+        
+        if (gameId && this.isAuthenticated()) {
+            this.gameId = gameId;
+            this.playerColor = playerColor;
+            this.isSpectator = isSpectator;
+            return true;
+        }
+        return false;
+    }
+
+    saveGameSession(gameId, playerColor, isSpectator) {
+        this.gameId = gameId;
+        this.playerColor = playerColor;
+        this.isSpectator = isSpectator;
+        localStorage.setItem('chess_game_id', gameId);
+        localStorage.setItem('chess_player_color', playerColor || '');
+        localStorage.setItem('chess_is_spectator', isSpectator.toString());
+    }
+
+    clearGameSession() {
+        this.gameId = null;
+        this.playerColor = null;
+        this.isSpectator = false;
+        localStorage.removeItem('chess_game_id');
+        localStorage.removeItem('chess_player_color');
+        localStorage.removeItem('chess_is_spectator');
+    }
+
+    async restoreGameSession() {
+        if (!this.gameId) return;
+        
+        try {
+            this.showStatus('Restoring game session...', 'info');
+            
+            // Update UI to show game info
+            document.getElementById('playerInfo').style.display = 'block';
+            document.getElementById('gameId').textContent = this.gameId;
+            
+            if (this.isSpectator) {
+                document.getElementById('playerColorInfo').style.display = 'none';
+                document.getElementById('spectatorInfo').style.display = 'block';
+            } else if (this.playerColor) {
+                document.getElementById('playerColor').textContent = this.playerColor;
+                document.getElementById('playerColorInfo').style.display = 'block';
+                document.getElementById('spectatorInfo').style.display = 'none';
+            }
+            
+            // Recreate the board with correct orientation
+            this.createBoard();
+            
+            // Load game state and start polling
+            await this.loadGameState();
+            this.startPolling();
+            
+            this.showStatus('Game session restored!', 'success');
+        } catch (error) {
+            this.showStatus('Could not restore game session: ' + error.message, 'error');
+            // Clear invalid session
+            this.clearGameSession();
+        }
     }
 
     isAuthenticated() {
@@ -169,19 +240,15 @@ class ChessApp {
 
     logout() {
         this.clearAuthState();
+        this.clearGameSession();
         this.updateAuthUI();
         this.showStatus('Logged out successfully', 'info');
         
-        // Clear game state if any
-        if (this.gameId) {
-            this.gameId = null;
-            this.playerColor = null;
-            this.isSpectator = false;
-            document.getElementById('playerInfo').style.display = 'none';
-            if (this.pollInterval) {
-                clearInterval(this.pollInterval);
-                this.pollInterval = null;
-            }
+        // Clear game UI
+        document.getElementById('playerInfo').style.display = 'none';
+        if (this.pollInterval) {
+            clearInterval(this.pollInterval);
+            this.pollInterval = null;
         }
     }
 
@@ -342,9 +409,9 @@ class ChessApp {
             }
             
             const data = await response.json();
-            this.gameId = gameId;
-            this.playerColor = null;
-            this.isSpectator = true;
+            
+            // Save game session to localStorage
+            this.saveGameSession(gameId, null, true);
             
             document.getElementById('playerInfo').style.display = 'block';
             document.getElementById('gameId').textContent = this.gameId;
@@ -408,9 +475,9 @@ class ChessApp {
             }
             
             const data = await response.json();
-            this.gameId = gameId;
-            this.playerColor = data.color;
-            this.isSpectator = false;
+            
+            // Save game session to localStorage
+            this.saveGameSession(gameId, data.color, false);
             
             document.getElementById('playerInfo').style.display = 'block';
             document.getElementById('gameId').textContent = this.gameId;
