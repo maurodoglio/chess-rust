@@ -1,5 +1,5 @@
 pub mod session;
 pub mod state;
 
-pub use session::{GameSession, Player};
+pub use session::GameSession;
 pub use state::GameState;
