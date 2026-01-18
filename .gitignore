@@ -27,3 +27,5 @@ target
 
 # Docker environment files
 .env
+.env.azure
+.env.render

@@ -2,9 +2,28 @@
 
 This guide provides information on how to deploy and use the chess backend.
 
-## Docker Deployment (Recommended)
+## Deployment Options
 
-The easiest way to deploy the application is using Docker and Docker Compose.
+### Azure Deployment (Production)
+
+For production deployments to Microsoft Azure, see the [Azure Deployment Guide](AZURE-DEPLOYMENT.md).
+
+Quick start:
+```bash
+az login
+docker context create aci azure-chess-rust
+docker compose -f docker-compose.azure.yml up
+```
+
+For detailed instructions, see [AZURE-DEPLOYMENT.md](AZURE-DEPLOYMENT.md) and [AZURE-QUICKREF.md](AZURE-QUICKREF.md).
+
+### Render Deployment (Quick Cloud Setup)
+
+For quick cloud deployment with minimal setup, see the [Render Deployment Guide](RENDER-DEPLOYMENT.md).
+
+### Docker Deployment (Local/Self-Hosted)
+
+The easiest way to deploy the application locally or on your own servers is using Docker and Docker Compose.
 
 ### Quick Start
 
